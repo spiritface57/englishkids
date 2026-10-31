@@ -1,0 +1,11 @@
+# Cloudflare Pages config. Deploy with: npm run deploy
+name = "englishkids"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-01"
+
+# Optional: store every booking request so nothing is lost.
+# 1) npx wrangler kv namespace create BOOKINGS
+# 2) uncomment and paste the id below
+# [[kv_namespaces]]
+# binding = "BOOKINGS"
+# id = "<your-kv-namespace-id>"

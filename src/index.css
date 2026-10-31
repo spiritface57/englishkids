@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Vazirmatn Variable', 'Vazirmatn', system-ui, sans-serif;
+  --font-display: 'Fredoka', 'Vazirmatn Variable', system-ui, sans-serif;
+
+  /* Palette: dark green #009B4D, tangerine yellow #FFCC00, ivory #FAF5E9 */
+  --color-cream: #faf5e9;
+  --color-surface: #ffffff;
+  --color-ink: #1f2a37;
+  --color-night: #0f1f17;
+
+  --color-leaf-50: #e9f7ef;
+  --color-leaf-100: #c9edd7;
+  --color-leaf-200: #98dab2;
+  --color-leaf-500: #009b4d;
+  --color-leaf-600: #008342;
+  --color-leaf-700: #006935;
+
+  --color-sun-50: #fffae6;
+  --color-sun-100: #fff1b8;
+  --color-sun-400: #ffd633;
+  --color-sun-500: #ffcc00;
+  --color-sun-600: #f0b800;
+  --color-sun-700: #8a6400;
+
+  --color-grape-50: #f5f2fd;
+  --color-grape-100: #ece6fb;
+  --color-grape-500: #7c5cd6;
+  --color-grape-600: #6847c4;
+
+  --color-berry-100: #ffe1e6;
+  --color-berry-500: #ef4f6b;
+
+  --shadow-soft: 0 10px 30px -12px rgb(31 42 55 / 0.18);
+  --shadow-pop: 0 18px 40px -16px rgb(0 155 77 / 0.45);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+  }
+  ::selection {
+    @apply bg-sun-100 text-ink;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sun-500;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Dark theme: palette tokens are re-pointed, so components need no dark: variants. */
+.dark {
+  color-scheme: dark;
+  --color-cream: #0e1512;
+  --color-surface: #17211c;
+  --color-ink: #e8eee9;
+
+  --color-leaf-50: #10261a;
+  --color-leaf-100: #153522;
+  --color-leaf-200: #1f5034;
+  --color-leaf-700: #6fdc9f;
+
+  --color-sun-50: #29240f;
+  --color-sun-100: #3a3112;
+  --color-sun-700: #ffd84d;
+
+  --color-grape-50: #1b1830;
+  --color-grape-100: #2a2346;
+  --color-grape-600: #b7a4f7;
+
+  --color-berry-100: #3a1a24;
+
+  --shadow-soft: 0 10px 30px -12px rgb(0 0 0 / 0.6);
+}
+
+body {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Large green panels: a calmer gradient than flat brand green, much deeper in dark mode. */
+:root {
+  --band-from: #009b4d;
+  --band-to: #006d37;
+}
+.dark {
+  --band-from: #0f3a25;
+  --band-to: #0a2418;
+}
+.bg-band {
+  background-image: linear-gradient(135deg, var(--band-from), var(--band-to));
+}
+
+.dotted-bg {
+  background-image: radial-gradient(color-mix(in srgb, var(--color-ink) 9%, transparent) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+.card-flip {
+  transform-style: preserve-3d;
+}
+.card-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
