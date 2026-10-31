@@ -3,21 +3,21 @@
 Personal website for **Leila Abbasi**, children's English teacher (ages 5+).
 Bilingual (فارسی RTL / English), animated, with a booking form and WhatsApp / Instagram contact.
 
-Stack: Vite + React + TypeScript + Tailwind CSS v4 + Motion, hosted on **Cloudflare Pages**
-(the booking endpoint is a Pages Function in `functions/api/book.ts`).
+Stack: Vite + React + TypeScript + Tailwind CSS v4 + Motion, hosted on **Cloudflare Workers**
+(static assets from `dist/`, plus the booking endpoint `POST /api/book` in `worker/index.ts`).
 
 ## Develop
 
 ```bash
 npm install
-npm run dev          # site only, http://localhost:5173 (booking falls back to WhatsApp)
-npm run pages:dev    # site + /api/book via Cloudflare's local runtime
+npm run dev              # site only, http://localhost:5173 (booking falls back to WhatsApp)
+npm run preview:worker   # built site + /api/book in Cloudflare's local runtime, http://localhost:8787
 ```
 
-## Deploy to Cloudflare Pages
+## Deploy to Cloudflare Workers
 
-**Option A: Git (recommended).** Cloudflare dashboard → Workers & Pages → Create → Pages → connect this GitHub repo.
-Build command `npm run build`, output directory `dist`. Every push to `main` deploys.
+**Option A: Git (recommended).** Cloudflare dashboard → Workers & Pages → Create → Import a repository → this GitHub repo.
+Build command `npm run build`, deploy command `npx wrangler deploy`. Every push to `main` deploys.
 
 **Option B: CLI.**
 
@@ -26,16 +26,16 @@ npx wrangler login
 npm run deploy
 ```
 
-Then add a custom domain under the Pages project → Custom domains.
+Then add a custom domain under the Worker → Settings → Domains & Routes.
 
 ## Receiving booking requests
 
 The form always offers "send via WhatsApp". To also receive submissions from the form directly, configure one or both:
 
-- **Telegram notification**: create a bot with @BotFather, get your chat id, then in the Pages project →
+- **Telegram notification**: create a bot with @BotFather, get your chat id, then in the Worker →
   Settings → Variables and secrets add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (as secrets).
-- **Storage (KV)**: `npx wrangler kv namespace create BOOKINGS`, then bind it as `BOOKINGS` in the Pages project
-  settings (or uncomment the block in `wrangler.toml`). Requests are visible in the dashboard under KV.
+- **Storage (KV)**: `npx wrangler kv namespace create BOOKINGS`, then uncomment the `[[kv_namespaces]]` block in
+  `wrangler.toml` with the printed id and push. Requests are visible in the dashboard under KV.
 
 If neither is configured, the form tells visitors to send the request via WhatsApp instead.
 

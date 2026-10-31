@@ -1,8 +1,9 @@
-// Cloudflare Pages Function: POST /api/book
-// Saves booking requests to KV (if the BOOKINGS binding exists) and notifies Telegram (if secrets are set).
+// Cloudflare Worker: serves the built site from ./dist (static assets) and handles POST /api/book.
+// Booking requests are saved to KV (if the BOOKINGS binding exists) and sent to Telegram (if secrets are set).
 // When neither is configured it returns 503, and the site falls back to sending the request via WhatsApp.
 
 interface Env {
+  ASSETS: Fetcher;
   BOOKINGS?: KVNamespace;
   TELEGRAM_BOT_TOKEN?: string;
   TELEGRAM_CHAT_ID?: string;
@@ -21,7 +22,7 @@ const json = (body: unknown, status = 200) =>
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
-export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+async function handleBooking(request: Request, env: Env) {
   let data: Booking;
   try {
     data = await request.json();
@@ -65,4 +66,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   return delivered ? json({ ok: true }) : json({ ok: false, error: 'not_configured' }, 503);
-};
+}
+
+export default {
+  async fetch(request, env) {
+    const { pathname } = new URL(request.url);
+    if (pathname === '/api/book') {
+      return request.method === 'POST' ? handleBooking(request, env) : json({ ok: false }, 405);
+    }
+    return env.ASSETS.fetch(request);
+  },
+} satisfies ExportedHandler<Env>;

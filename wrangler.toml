@@ -1,7 +1,13 @@
-# Cloudflare Pages config. Deploy with: npm run deploy
+# Cloudflare Workers config (site = static assets in ./dist, plus /api/book handled by worker/index.ts).
+# Deploy with: npm run deploy   (Cloudflare Git builds run `npx wrangler deploy` after `npm run build`)
 name = "englishkids"
-pages_build_output_dir = "./dist"
+main = "worker/index.ts"
 compatibility_date = "2026-10-01"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
 
 # Optional: store every booking request so nothing is lost.
 # 1) npx wrangler kv namespace create BOOKINGS
