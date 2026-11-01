@@ -30,14 +30,25 @@ Then add a custom domain under the Worker → Settings → Domains & Routes.
 
 ## Receiving booking requests
 
-The form always offers "send via WhatsApp". To also receive submissions from the form directly, configure one or both:
+The form always offers "send via WhatsApp". To also receive submissions from the form directly, configure any of these:
+
+- **Email (Brevo)**: in Brevo → SMTP & API → API keys, create an API key, then add it to the Worker as the secret
+  `BREVO_API_KEY`. Requests are emailed from `EMAIL_FROM` to `EMAIL_TO` (set in `wrangler.toml`). The sender domain must be
+  authenticated in Brevo. If Brevo rejects calls with "unrecognised IP", turn off IP blocking under Brevo → Security →
+  Authorised IPs (Workers don't have fixed IPs).
 
 - **Telegram notification**: create a bot with @BotFather, get your chat id, then in the Worker →
   Settings → Variables and secrets add `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` (as secrets).
 - **Storage (KV)**: `npx wrangler kv namespace create BOOKINGS`, then uncomment the `[[kv_namespaces]]` block in
   `wrangler.toml` with the printed id and push. Requests are visible in the dashboard under KV.
 
-If neither is configured, the form tells visitors to send the request via WhatsApp instead.
+If none is configured, the form tells visitors to send the request via WhatsApp instead.
+
+### Bot protection (Cloudflare Turnstile)
+
+Cloudflare dashboard → Turnstile → Add widget, hostnames `englishkids.ir` and `www.englishkids.ir`, mode "Managed".
+Put the **site key** in `turnstileSiteKey` in `src/content.ts`, and add the **secret key** to the Worker as the secret
+`TURNSTILE_SECRET_KEY`. Set both or neither: with only the secret set, every form submission is rejected.
 
 ## Editing content
 

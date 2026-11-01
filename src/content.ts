@@ -12,6 +12,9 @@ export const links = {
   tel: `tel:${contact.phoneTel}`,
 };
 
+// Cloudflare Turnstile site key (public). Leave empty to hide the widget; the worker's TURNSTILE_SECRET_KEY must match.
+export const turnstileSiteKey = '0x4AAAAAAFvra3dP-yZGGHH4';
+
 export type Lang = 'fa' | 'en';
 
 export const content = {
@@ -158,6 +161,8 @@ export const content = {
       sending: 'در حال ارسال...',
       viaWhatsapp: 'ارسال با واتساپ',
       required: 'لطفاً نام و شماره تماس معتبر را وارد کنید.',
+      captchaRequired: 'لطفاً صبر کنید تا بررسی امنیتی کامل شود.',
+      captchaFailed: 'بررسی امنیتی ناموفق بود؛ لطفاً دوباره تلاش کنید.',
       successTitle: 'درخواست شما ثبت شد! 🎉',
       successText: 'به‌زودی برای هماهنگی با شما تماس می‌گیرم. برای پاسخ سریع‌تر می‌توانید در واتساپ هم پیام دهید.',
       fallbackText: 'ارسال آنلاین انجام نشد؛ لطفاً درخواست را از طریق واتساپ بفرستید.',
@@ -337,6 +342,8 @@ export const content = {
       sending: 'Sending...',
       viaWhatsapp: 'Send via WhatsApp',
       required: 'Please enter your name and a valid phone number.',
+      captchaRequired: 'Please wait for the security check to finish.',
+      captchaFailed: 'The security check failed — please try again.',
       successTitle: 'Request received! 🎉',
       successText: 'I’ll contact you soon to arrange everything. For a faster reply, you can also message me on WhatsApp.',
       fallbackText: 'Online sending didn’t work — please send your request via WhatsApp.',

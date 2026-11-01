@@ -2,8 +2,9 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { CalendarHeart, Loader2, PartyPopper, Send } from 'lucide-react';
 import { useI18n } from '../i18n';
-import { links } from '../content';
+import { links, turnstileSiteKey } from '../content';
 import { Reveal, Section, WhatsAppIcon } from './ui';
+import Turnstile from './Turnstile';
 
 type ClassType = 'private' | 'semi' | 'unsure';
 type Mode = 'online' | 'inperson' | 'either';
@@ -89,6 +90,8 @@ export default function Booking() {
   const [form, setForm] = useState<Form>(empty);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0); // bump to get a fresh widget (tokens are single-use)
 
   const set = <K extends keyof Form>(key: K, value: Form[K]) =>
     setForm((f) => {
@@ -136,17 +139,28 @@ export default function Booking() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!valid()) return;
+    if (turnstileSiteKey && !captchaToken) {
+      setError(b.captchaRequired);
+      return;
+    }
     setStatus('sending');
     try {
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), lang, summary: summary() }),
+        body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), lang, summary: summary(), turnstileToken: captchaToken }),
       });
-      setStatus(res.ok ? 'success' : 'fallback');
+      if (res.status === 403) {
+        setError(b.captchaFailed);
+        setStatus('idle');
+      } else {
+        setStatus(res.ok ? 'success' : 'fallback');
+      }
     } catch {
       setStatus('fallback');
     }
+    setCaptchaToken('');
+    setCaptchaKey((k) => k + 1);
   };
 
   return (
@@ -332,6 +346,8 @@ export default function Booking() {
                   value={form.website}
                   onChange={(e) => set('website', e.target.value)}
                 />
+
+                {turnstileSiteKey && <Turnstile key={captchaKey} siteKey={turnstileSiteKey} lang={lang} onToken={setCaptchaToken} />}
 
                 <AnimatePresence>
                   {error && (

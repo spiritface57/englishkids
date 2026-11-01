@@ -1,3 +1,6 @@
-# Copy to .dev.vars for local testing; set the same values as secrets in Cloudflare Pages.
+# Copy to .dev.vars for local testing; set the same values as secrets on the Worker (Settings -> Variables and secrets).
+BREVO_API_KEY=
+# Turnstile test secret that always passes (use with test site key 1x00000000000000000000AA):
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=

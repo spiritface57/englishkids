@@ -9,6 +9,12 @@ directory = "./dist"
 binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
+# Booking emails are sent through Brevo (secret BREVO_API_KEY) to EMAIL_TO.
+# Form bot protection: Cloudflare Turnstile (secret TURNSTILE_SECRET_KEY; site key in src/content.ts).
+[vars]
+EMAIL_TO = "admin@englishkids.ir"
+EMAIL_FROM = "noreply@englishkids.ir"
+
 # Optional: store every booking request so nothing is lost.
 # 1) npx wrangler kv namespace create BOOKINGS
 # 2) uncomment and paste the id below
