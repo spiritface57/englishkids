@@ -3,6 +3,8 @@
 // saved to KV and/or sent to Telegram, whichever is configured.
 // When none is configured it returns 503, and the site falls back to sending the request via WhatsApp.
 
+import { bookingHtml, bookingSubject, bookingText, type BookingEmail } from './email';
+
 interface Env {
   ASSETS: Fetcher;
   BOOKINGS?: KVNamespace;
@@ -18,6 +20,8 @@ type Booking = {
   parentName?: unknown;
   phone?: unknown;
   summary?: unknown;
+  details?: unknown;
+  notes?: unknown;
   lang?: unknown;
   website?: unknown;
   turnstileToken?: unknown;
@@ -28,8 +32,15 @@ const json = (body: unknown, status = 200) =>
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
-const escapeHtml = (s: string) =>
-  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+// [label, value] pairs from the form; anything malformed or empty is dropped.
+const pairs = (v: unknown): [string, string][] =>
+  Array.isArray(v)
+    ? v
+        .slice(0, 12)
+        .filter((p): p is [string, string] => Array.isArray(p) && typeof p[0] === 'string' && typeof p[1] === 'string')
+        .map(([k, val]): [string, string] => [str(k, 60), str(val, 300)])
+        .filter(([k, val]) => k && val)
+    : [];
 
 async function verifyTurnstile(token: string, request: Request, secret: string) {
   if (!token) return false;
@@ -43,16 +54,16 @@ async function verifyTurnstile(token: string, request: Request, secret: string) 
   return outcome.success;
 }
 
-async function sendEmail(env: Env, apiKey: string, subject: string, text: string) {
+async function sendEmail(env: Env, apiKey: string, booking: BookingEmail) {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: { 'api-key': apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
       sender: { name: 'Miss Leila website', email: env.EMAIL_FROM || 'noreply@englishkids.ir' },
       to: [{ email: env.EMAIL_TO || 'admin@englishkids.ir' }],
-      subject,
-      textContent: text,
-      htmlContent: `<div dir="auto" style="font-family:Tahoma,Arial,sans-serif;font-size:15px;line-height:1.8;white-space:pre-wrap">${escapeHtml(text)}</div>`,
+      subject: bookingSubject(booking),
+      textContent: bookingText(booking),
+      htmlContent: bookingHtml(booking),
     }),
   });
   if (!res.ok) console.error('Brevo error', res.status, await res.text());
@@ -97,8 +108,16 @@ async function handleBooking(request: Request, env: Env) {
   }
 
   if (env.BREVO_API_KEY) {
-    const text = `New booking request\n${record.createdAt}\n\n${summary}`;
-    delivered = (await sendEmail(env, env.BREVO_API_KEY, `New booking request: ${parentName}`, text)) || delivered;
+    const booking: BookingEmail = {
+      parentName,
+      phone,
+      details: pairs(data.details),
+      notes: str(data.notes, 2000),
+      createdAt: new Date(record.createdAt),
+      lang: record.lang,
+      country: record.country,
+    };
+    delivered = (await sendEmail(env, env.BREVO_API_KEY, booking)) || delivered;
   }
 
   if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {

@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { CalendarHeart, Loader2, PartyPopper, Send } from 'lucide-react';
 import { useI18n } from '../i18n';
-import { links, turnstileSiteKey } from '../content';
+import { content, links, turnstileSiteKey, type Content, type Lang } from '../content';
 import { Reveal, Section, WhatsAppIcon } from './ui';
 import Turnstile from './Turnstile';
 
@@ -103,23 +103,28 @@ export default function Booking() {
   const toggleDay = (d: number) =>
     set('days', form.days.includes(d) ? form.days.filter((x) => x !== d) : [...form.days, d].sort());
 
-  const timeRange = () => {
+  const timeRange = (bt: Content['booking'], lng: Lang) => {
     const { timeFrom: from, timeTo: to } = form;
     if (!from && !to) return '';
-    if (from && to) return `${b.from} ${formatTime(from, lang)} ${b.to} ${formatTime(to, lang)}`;
-    return from ? `${b.from} ${formatTime(from, lang)}` : `${b.to} ${formatTime(to, lang)}`;
+    if (from && to) return `${bt.from} ${formatTime(from, lng)} ${bt.to} ${formatTime(to, lng)}`;
+    return from ? `${bt.from} ${formatTime(from, lng)}` : `${bt.to} ${formatTime(to, lng)}`;
   };
+
+  // Class details (everything except contact info and notes), labelled in the given language.
+  const detailRows = (bt: Content['booking'], lng: Lang): [string, string][] => [
+    [bt.childName, form.childName],
+    [bt.childAge, form.childAge],
+    [bt.classType, bt.classTypes[form.classType]],
+    [bt.mode, bt.modes[form.mode]],
+    [bt.days, form.days.map((d) => bt.dayNames[d]).join('، ')],
+    [bt.time, timeRange(bt, lng)],
+  ];
 
   const summary = () => {
     const rows: [string, string][] = [
       [b.parentName, form.parentName],
       [b.phone, normalizePhone(form.phone)],
-      [b.childName, form.childName],
-      [b.childAge, form.childAge],
-      [b.classType, b.classTypes[form.classType]],
-      [b.mode, b.modes[form.mode]],
-      [b.days, form.days.map((d) => b.dayNames[d]).join('، ')],
-      [b.time, timeRange()],
+      ...detailRows(b, lang),
       [b.notes, form.notes],
     ];
     return rows.filter(([, v]) => v.trim()).map(([k, v]) => `• ${k}: ${v}`).join('\n');
@@ -148,7 +153,14 @@ export default function Booking() {
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), lang, summary: summary(), turnstileToken: captchaToken }),
+        body: JSON.stringify({
+          ...form,
+          phone: normalizePhone(form.phone),
+          lang,
+          summary: summary(),
+          details: detailRows(content.fa.booking, 'fa'), // the notification email is always in Persian
+          turnstileToken: captchaToken,
+        }),
       });
       if (res.status === 403) {
         setError(b.captchaFailed);
