@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { CalendarHeart, Loader2, PartyPopper, Send } from 'lucide-react';
 import { useI18n } from '../i18n';
-import { content, links, turnstileSiteKey, type Content, type Lang } from '../content';
+import { links, turnstileSiteKey, type Content, type Lang } from '../content';
 import { Reveal, Section, WhatsAppIcon } from './ui';
 import Turnstile from './Turnstile';
 
@@ -116,7 +116,7 @@ export default function Booking() {
     [bt.childAge, form.childAge],
     [bt.classType, bt.classTypes[form.classType]],
     [bt.mode, bt.modes[form.mode]],
-    [bt.days, form.days.map((d) => bt.dayNames[d]).join('، ')],
+    [bt.days, form.days.map((d) => bt.dayNames[d]).join(lng === 'fa' ? '، ' : ', ')],
     [bt.time, timeRange(bt, lng)],
   ];
 
@@ -158,7 +158,7 @@ export default function Booking() {
           phone: normalizePhone(form.phone),
           lang,
           summary: summary(),
-          details: detailRows(content.fa.booking, 'fa'), // the notification email is always in Persian
+          details: detailRows(b, lang), // the notification email uses the language of the site side
           turnstileToken: captchaToken,
         }),
       });
