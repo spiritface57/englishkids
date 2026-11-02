@@ -1,0 +1,163 @@
+// Word packs for the "Festival words" activity. Dates are approximate (Nowruz and Yalda move by a day between years).
+
+export type FestivalWord = { en: string; fa: string; e: string; s: string };
+
+export type Pack = {
+  key: string;
+  emoji: string;
+  month: number; // 1–12
+  day: number;
+  lasts: number; // how many days the pack counts as "now"
+  fa: { title: string; when: string; intro: string };
+  en: { title: string; when: string; intro: string };
+  words: FestivalWord[];
+};
+
+export const packs: Pack[] = [
+  {
+    key: 'nowruz',
+    emoji: '🌷',
+    month: 3,
+    day: 20,
+    lasts: 14,
+    fa: { title: 'نوروز', when: 'حدود ۲۰ مارس، اول فروردین', intro: 'سفره‌ی هفت‌سین، لباس نو و دید و بازدید!' },
+    en: { title: 'Nowruz', when: 'About 20 March', intro: 'The Haft-Sin table, new clothes and family visits!' },
+    words: [
+      { en: 'spring', fa: 'بهار', e: '🌸', s: 'Spring is here and the flowers are back.' },
+      { en: 'goldfish', fa: 'ماهی قرمز', e: '🐠', s: 'The little goldfish swims in a bowl.' },
+      { en: 'sprouts', fa: 'سبزه', e: '🌱', s: 'We grow green sprouts for Nowruz.' },
+      { en: 'apple', fa: 'سیب', e: '🍎', s: 'A red apple sits on the table.' },
+      { en: 'garlic', fa: 'سیر', e: '🧄', s: 'We put garlic on the Haft-Sin table.' },
+      { en: 'coin', fa: 'سکه', e: '🪙', s: 'Grandpa gives me a shiny coin.' },
+      { en: 'mirror', fa: 'آینه', e: '🪞', s: 'I can see my smile in the mirror.' },
+      { en: 'candle', fa: 'شمع', e: '🕯️', s: 'We light a candle for the new year.' },
+      { en: 'hyacinth', fa: 'سنبل', e: '🪻', s: 'The purple hyacinth smells so sweet.' },
+      { en: 'painted eggs', fa: 'تخم‌مرغ رنگی', e: '🥚', s: 'We make painted eggs in bright colours.' },
+      { en: 'new clothes', fa: 'لباس نو', e: '👗', s: 'I wear my new clothes for Nowruz.' },
+      { en: 'visit family', fa: 'دید و بازدید', e: '👨‍👩‍👧', s: 'We visit family and friends.' },
+      { en: 'picnic', fa: 'پیک‌نیک سیزده‌بدر', e: '🧺', s: 'We go on a picnic in the park.' },
+      { en: 'Happy New Year', fa: 'سال نو مبارک', e: '🎉', s: 'We hug and say, "Happy New Year!"' },
+    ],
+  },
+  {
+    key: 'summer',
+    emoji: '☀️',
+    month: 6,
+    day: 21,
+    lasts: 70,
+    fa: { title: 'تعطیلات تابستان', when: 'از حدود ۲۱ ژوئن، اول تیر', intro: 'دریا، بستنی و سفرهای تابستانی!' },
+    en: { title: 'Summer holiday', when: 'From about 21 June', intro: 'The sea, ice cream and summer trips!' },
+    words: [
+      { en: 'sun', fa: 'خورشید', e: '☀️', s: 'The sun is big and bright.' },
+      { en: 'beach', fa: 'ساحل', e: '🏖️', s: 'We play on the beach all day.' },
+      { en: 'sea', fa: 'دریا', e: '🌊', s: 'The sea is blue and cool.' },
+      { en: 'swim', fa: 'شنا کردن', e: '🏊', s: 'I can swim like a fish!' },
+      { en: 'ice cream', fa: 'بستنی', e: '🍦', s: 'I love ice cream on a hot day.' },
+      { en: 'sunglasses', fa: 'عینک آفتابی', e: '🕶️', s: 'Dad wears his cool sunglasses.' },
+      { en: 'sun hat', fa: 'کلاه آفتابی', e: '👒', s: 'My sun hat keeps me cool.' },
+      { en: 'shell', fa: 'صدف', e: '🐚', s: 'I found a pretty shell in the sand.' },
+      { en: 'tent', fa: 'چادر', e: '⛺', s: 'We sleep in a tent under the stars.' },
+      { en: 'suitcase', fa: 'چمدان', e: '🧳', s: 'My suitcase is ready for the trip.' },
+      { en: 'plane', fa: 'هواپیما', e: '✈️', s: 'The plane flies high in the sky.' },
+      { en: 'hot', fa: 'گرم', e: '🥵', s: 'It is very hot today!' },
+    ],
+  },
+  {
+    key: 'school',
+    emoji: '🎒',
+    month: 9,
+    day: 23,
+    lasts: 14,
+    fa: { title: 'بازگشت به مدرسه', when: 'حدود ۲۳ سپتامبر، اول مهر', intro: 'کوله‌پشتی را ببند؛ مدرسه شروع شد!' },
+    en: { title: 'Back to school', when: 'About 23 September (1 Mehr)', intro: 'Pack your bag, school is starting!' },
+    words: [
+      { en: 'school', fa: 'مدرسه', e: '🏫', s: 'My school has a big yard.' },
+      { en: 'teacher', fa: 'معلم', e: '🧑‍🏫', s: 'Our teacher is kind and funny.' },
+      { en: 'backpack', fa: 'کوله‌پشتی', e: '🎒', s: 'My backpack is full of books.' },
+      { en: 'pencil', fa: 'مداد', e: '✏️', s: 'I write my name with a pencil.' },
+      { en: 'book', fa: 'کتاب', e: '📕', s: 'Open your book, please.' },
+      { en: 'notebook', fa: 'دفتر', e: '📓', s: 'I draw a cat in my notebook.' },
+      { en: 'crayons', fa: 'مداد شمعی', e: '🖍️', s: 'I colour the sun with my crayons.' },
+      { en: 'ruler', fa: 'خط‌کش', e: '📏', s: 'Draw a straight line with a ruler.' },
+      { en: 'scissors', fa: 'قیچی', e: '✂️', s: 'Cut the paper with the scissors.' },
+      { en: 'friends', fa: 'دوستان', e: '🧑‍🤝‍🧑', s: 'I play with my friends at break time.' },
+      { en: 'school bus', fa: 'سرویس مدرسه', e: '🚌', s: 'The school bus is yellow.' },
+      { en: 'autumn', fa: 'پاییز', e: '🍂', s: 'School starts in autumn.' },
+    ],
+  },
+  {
+    key: 'halloween',
+    emoji: '🎃',
+    month: 10,
+    day: 31,
+    lasts: 1,
+    fa: { title: 'هالووین', when: '۳۱ اکتبر', intro: 'کدوهای خندان، لباس‌های بامزه و آبنبات!' },
+    en: { title: 'Halloween', when: '31 October', intro: 'Smiling pumpkins, funny costumes and candy!' },
+    words: [
+      { en: 'pumpkin', fa: 'کدو حلوایی', e: '🎃', s: 'We draw a happy face on the pumpkin.' },
+      { en: 'costume', fa: 'لباس مبدل', e: '🦸', s: 'I wear a superhero costume.' },
+      { en: 'mask', fa: 'ماسک', e: '🎭', s: 'My mask has a big smile.' },
+      { en: 'candy', fa: 'آبنبات', e: '🍬', s: 'We share our candy with friends.' },
+      { en: 'bat', fa: 'خفاش', e: '🦇', s: 'The little bat sleeps all day.' },
+      { en: 'ghost', fa: 'روح', e: '👻', s: 'The friendly ghost says, "Boo!"' },
+      { en: 'witch', fa: 'جادوگر', e: '🧙‍♀️', s: 'The kind witch has a tall hat.' },
+      { en: 'spider', fa: 'عنکبوت', e: '🕷️', s: 'A tiny spider climbs up the wall.' },
+      { en: 'web', fa: 'تار عنکبوت', e: '🕸️', s: 'The spider makes a big web.' },
+      { en: 'moon', fa: 'ماه', e: '🌕', s: 'The moon is big and round tonight.' },
+      { en: 'black cat', fa: 'گربه‌ی سیاه', e: '🐈‍⬛', s: 'The black cat says, "Meow!"' },
+      { en: 'owl', fa: 'جغد', e: '🦉', s: 'The owl says "hoo-hoo" at night.' },
+    ],
+  },
+  {
+    key: 'yalda',
+    emoji: '🍉',
+    month: 12,
+    day: 21,
+    lasts: 1,
+    fa: { title: 'شب یلدا', when: 'حدود ۲۱ دسامبر، شب آخر پاییز', intro: 'بلندترین شب سال، کنار خانواده و هندوانه!' },
+    en: {
+      title: 'Yalda Night',
+      when: 'About 21 December',
+      intro: 'The longest night of the year, with family and watermelon!',
+    },
+    words: [
+      { en: 'watermelon', fa: 'هندوانه', e: '🍉', s: 'We eat red watermelon on Yalda Night.' },
+      // There is no pomegranate emoji, so this card shows the word only (and is left out of the picture quiz).
+      { en: 'pomegranate', fa: 'انار', e: '', s: 'The pomegranate is red inside.' },
+      { en: 'nuts', fa: 'آجیل', e: '🥜', s: 'Grandma brings a big bowl of nuts.' },
+      { en: 'poem', fa: 'شعر', e: '📜', s: 'Grandpa reads a poem by Hafez.' },
+      { en: 'longest night', fa: 'بلندترین شب', e: '🌙', s: 'Yalda is the longest night of the year.' },
+      { en: 'grandma', fa: 'مادربزرگ', e: '👵', s: 'We go to Grandma’s house.' },
+      { en: 'grandpa', fa: 'پدربزرگ', e: '👴', s: 'Grandpa tells funny stories.' },
+      { en: 'candle', fa: 'شمع', e: '🕯️', s: 'We light a candle in the dark.' },
+      { en: 'winter', fa: 'زمستان', e: '❄️', s: 'Tomorrow is the first day of winter.' },
+      { en: 'story', fa: 'قصه', e: '📖', s: 'I listen to a long story.' },
+      { en: 'tea', fa: 'چای', e: '☕', s: 'Mum makes hot tea for everyone.' },
+      { en: 'family', fa: 'خانواده', e: '👨‍👩‍👧‍👦', s: 'The whole family sits together.' },
+      { en: 'red', fa: 'قرمز', e: '🔴', s: 'Watermelon and pomegranate are red.' },
+    ],
+  },
+  {
+    key: 'christmas',
+    emoji: '🎄',
+    month: 12,
+    day: 25,
+    lasts: 8,
+    fa: { title: 'کریسمس', when: '۲۵ دسامبر', intro: 'درخت چراغانی، آدم‌برفی و هدیه!' },
+    en: { title: 'Christmas', when: '25 December', intro: 'A twinkly tree, a snowman and gifts!' },
+    words: [
+      { en: 'Christmas tree', fa: 'درخت کریسمس', e: '🎄', s: 'We put lights on the Christmas tree.' },
+      { en: 'gift', fa: 'هدیه', e: '🎁', s: 'This gift is for you!' },
+      { en: 'snowman', fa: 'آدم‌برفی', e: '☃️', s: 'Our snowman has a carrot nose.' },
+      { en: 'Santa', fa: 'بابانوئل', e: '🎅', s: 'Santa has a long white beard.' },
+      { en: 'star', fa: 'ستاره', e: '⭐', s: 'A gold star sits on top of the tree.' },
+      { en: 'bell', fa: 'زنگوله', e: '🔔', s: 'The little bell goes "jingle, jingle!"' },
+      { en: 'stocking', fa: 'جوراب کریسمس', e: '🧦', s: 'We hang a stocking by the window.' },
+      { en: 'snow', fa: 'برف', e: '❄️', s: 'The snow is cold and white.' },
+      { en: 'reindeer', fa: 'گوزن شمالی', e: '🦌', s: 'The reindeer has big antlers.' },
+      { en: 'sleigh', fa: 'سورتمه', e: '🛷', s: 'We ride the sleigh down the hill.' },
+      { en: 'cookies', fa: 'کلوچه', e: '🍪', s: 'We bake cookies with Mum.' },
+      { en: 'gloves', fa: 'دستکش', e: '🧤', s: 'My gloves keep my hands warm.' },
+    ],
+  },
+];

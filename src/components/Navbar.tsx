@@ -4,15 +4,44 @@ import { Languages, Menu, Moon, Sun, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme';
 import Logo from './Logo';
+import { usePage } from '../router';
+import { enabledSubPages, subPages } from '../navigation';
 
-const sections = ['about', 'classes', 'play', 'gallery', 'faq', 'contact'] as const;
+// Home-page sections that the menu links to (links from a sub-page go back to the home page).
+const homeSections = ['about', 'classes', 'gallery', 'faq', 'contact'] as const;
+// Shown in the desktop bar; the mobile menu shows everything.
+const desktopSections = new Set<string>(['about', 'classes', 'contact']);
 
 export default function Navbar() {
   const { t, lang, toggle } = useI18n();
   const { theme, toggle: toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const [active, setActive] = useState<string>('');
+  const [spied, setSpied] = useState<string>('');
+  const page = usePage();
+  // On the home page the section in view is highlighted; on a sub-page, that page.
+  const active = page === '/' ? spied : page;
+
+  // Menu order: about, classes, the pages, gallery, FAQ, contact.
+  const section = (id: (typeof homeSections)[number]) => ({
+    id,
+    href: `#${id}`,
+    label: t.nav[id],
+    desktop: desktopSections.has(id),
+  });
+  const items = [
+    section('about'),
+    section('classes'),
+    ...enabledSubPages.map((p) => ({
+      id: p as string,
+      href: p as string,
+      label: t.nav[subPages[p].navKey],
+      desktop: true,
+    })),
+    section('gallery'),
+    section('faq'),
+    section('contact'),
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -22,44 +51,49 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    setOpen(false);
+    if (page !== '/') return;
     const observer = new IntersectionObserver(
-      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+      (entries) => entries.forEach((e) => e.isIntersecting && setSpied(e.target.id)),
       { rootMargin: '-45% 0px -50% 0px' },
     );
-    sections.forEach((id) => {
+    homeSections.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
     });
     return () => observer.disconnect();
-  }, []);
+  }, [page]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3">
       <nav
         className={`mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-2xl px-4 py-2.5 transition-all duration-300 ${
-          scrolled ? 'bg-surface/85 shadow-soft backdrop-blur-md' : 'bg-transparent'
+          scrolled || page !== '/' ? 'bg-surface/85 shadow-soft backdrop-blur-md' : 'bg-transparent'
         }`}
       >
-        <a href="#top" className="shrink-0" aria-label="Miss Leila — English for Kids">
+        <a href="/#top" className="shrink-0" aria-label={`${t.nav.home}: Miss Leila — English for Kids`}>
           <Logo className="h-10 sm:h-11" />
         </a>
 
-        <ul className="hidden items-center gap-1 lg:flex">
-          {sections.map((id) => (
-            <li key={id}>
-              <a
-                href={`#${id}`}
-                className={`relative rounded-full px-3.5 py-2 text-[15px] font-semibold transition-colors ${
-                  active === id ? 'text-leaf-700' : 'text-ink/70 hover:text-ink'
-                }`}
-              >
-                {active === id && (
-                  <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-leaf-100" />
-                )}
-                {t.nav[id]}
-              </a>
-            </li>
-          ))}
+        <ul className="hidden items-center gap-0.5 lg:flex">
+          {items
+            .filter((it) => it.desktop)
+            .map((it) => (
+              <li key={it.id}>
+                <a
+                  href={it.href}
+                  aria-current={active === it.id ? 'page' : undefined}
+                  className={`relative rounded-full px-3 py-2 text-[15px] font-semibold whitespace-nowrap transition-colors ${
+                    active === it.id ? 'text-leaf-700' : 'text-ink/70 hover:text-ink'
+                  }`}
+                >
+                  {active === it.id && (
+                    <motion.span layoutId="nav-pill" className="absolute inset-0 -z-10 rounded-full bg-leaf-100" />
+                  )}
+                  {it.label}
+                </a>
+              </li>
+            ))}
         </ul>
 
         <div className="flex items-center gap-2">
@@ -94,7 +128,7 @@ export default function Navbar() {
           </button>
           <a
             href="#booking"
-            className="hidden rounded-full bg-sun-500 px-5 py-2.5 text-sm font-bold text-night shadow-[0_8px_20px_-8px_rgb(255_204_0/0.8)] transition hover:-translate-y-0.5 hover:bg-sun-600 sm:inline-flex"
+            className="hidden rounded-full bg-sun-500 px-5 py-2.5 text-sm font-bold whitespace-nowrap text-night shadow-[0_8px_20px_-8px_rgb(255_204_0/0.8)] transition hover:-translate-y-0.5 hover:bg-sun-600 sm:inline-flex"
           >
             {t.nav.book}
           </a>
@@ -116,16 +150,26 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.98 }}
             transition={{ duration: 0.2 }}
-            className="mx-auto mt-2 max-w-6xl rounded-2xl bg-surface p-3 shadow-soft lg:hidden"
+            className="mx-auto mt-2 max-h-[calc(100vh-6rem)] max-w-6xl overflow-y-auto rounded-2xl bg-surface p-3 shadow-soft lg:hidden"
           >
-            {sections.map((id) => (
+            <a
+              href="/#top"
+              onClick={() => setOpen(false)}
+              className="block rounded-xl px-4 py-3 font-semibold hover:bg-leaf-50"
+            >
+              {t.nav.home}
+            </a>
+            {items.map((it) => (
               <a
-                key={id}
-                href={`#${id}`}
+                key={it.id}
+                href={it.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-xl px-4 py-3 font-semibold hover:bg-leaf-50"
+                aria-current={active === it.id ? 'page' : undefined}
+                className={`block rounded-xl px-4 py-3 font-semibold ${
+                  active === it.id ? 'bg-leaf-100 text-leaf-700' : 'hover:bg-leaf-50'
+                }`}
               >
-                {t.nav[id]}
+                {it.label}
               </a>
             ))}
             <a

@@ -74,6 +74,13 @@ Put the **site key** in `turnstileSiteKey` in `src/content.ts`, and add the **se
 Logo mark: "Nib Quotes", a quotation mark drawn as two pen nibs above a smile.
 Colors: green `#009B4D`, yellow `#FFCC00`, ivory `#FAF5E9`, ink `#1F2A37` (from the "Dark Green, Ivory and Yellow" scheme). Fonts: Fredoka (Latin), Vazirmatn (Persian).
 
+## Optional features
+
+`src/features.ts` switches each extra feature on or off: level test, parents' corner and worksheets, and the learning
+playground activities (speaking practice, word of the day, sentence builder, read-along stories, memory, word search,
+save the balloons, festival words, sticker book & certificate). Switched-off features are not shown and their code is
+never downloaded. Children's progress (stickers, best scores, streaks) is kept only in their browser's localStorage.
+
 ## Trying other colour palettes
 
 `npm run dev` shows a 🎨 button (bottom corner) that applies one of ~60 trial palettes (`src/palettes.ts`) to the whole

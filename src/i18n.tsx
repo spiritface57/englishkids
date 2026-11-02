@@ -20,9 +20,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = dir;
-    document.title = t.meta.title;
     localStorage.setItem('lang', lang);
-  }, [lang, dir, t]);
+  }, [lang, dir]);
 
   const toggle = () => setLang((l) => (l === 'fa' ? 'en' : 'fa'));
 
