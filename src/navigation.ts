@@ -4,7 +4,8 @@ import type { Page } from './router';
 // The site's pages in one place: used by the navbar, page titles, breadcrumbs, the home page cards, the
 // "See also" links at the end of each sub-page and the footer.
 
-export type SubPage = Exclude<Page, '/'>;
+// /brand (the logo stamper) is a tool for the teacher, not linked from the menus.
+export type SubPage = Exclude<Page, '/' | '/brand'>;
 
 type Info = {
   emoji: string;

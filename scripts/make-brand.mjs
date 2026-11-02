@@ -45,6 +45,23 @@ const markArt = (c) => `
   <path d="${nibRight}" ${paint('fill', c.nibRight)}/>
   <path d="${smile}" fill="none" ${paint('stroke', c.smile)} stroke-width="8" stroke-linecap="round"/>`;
 
+// The mark alone on a transparent background (for placing on photos), cropped close to the artwork.
+const markSvg = (c) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 4 88 90">${markArt(c)}
+</svg>
+`;
+
+// The full logo on a white rounded card, readable on any photo.
+const badgeSvg = (logo) => {
+  const [, w, h] = /viewBox="0 0 (\d+) (\d+)"/.exec(logo).map(Number);
+  const padX = 56;
+  const padY = 40;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w + 2 * padX} ${h + 2 * padY}">
+  <rect width="${w + 2 * padX}" height="${h + 2 * padY}" rx="${(h + 2 * padY) / 2}" fill="#FFFFFF"/>
+  <svg x="${padX}" y="${padY}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${logo.replace(/^<svg[^>]*>|<\/svg>\s*$/g, '')}</svg>
+</svg>
+`;
+};
+
 // Icon artwork on a 512 grid: the white mark centred in the safe area of a green tile.
 const white = '#FFFFFF';
 const iconArt = () =>
@@ -68,9 +85,23 @@ const loadFont = async (weight) => {
   return opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 };
 
+// SVG path data from glyph outlines. Written by hand because opentype.js's toPathData() sometimes emits "NaN"
+// for valid coordinates (e.g. in "englishkids.ir"), which makes renderers stop drawing the rest of the text.
+const pathData = (commands) => {
+  const n = (v) => +v.toFixed(2);
+  return commands
+    .map((c) => {
+      if (c.type === 'M' || c.type === 'L') return `${c.type}${n(c.x)} ${n(c.y)}`;
+      if (c.type === 'Q') return `Q${n(c.x1)} ${n(c.y1)} ${n(c.x)} ${n(c.y)}`;
+      if (c.type === 'C') return `C${n(c.x1)} ${n(c.y1)} ${n(c.x2)} ${n(c.y2)} ${n(c.x)} ${n(c.y)}`;
+      return 'Z';
+    })
+    .join('');
+};
+
 const textPath = (font, text, x, baseline, size, letterSpacing = 0) => {
   const p = font.getPath(text, x, baseline, size, { letterSpacing });
-  return { d: p.toPathData(2), width: font.getAdvanceWidth(text, size, { letterSpacing }) };
+  return { d: pathData(p.commands), width: font.getAdvanceWidth(text, size, { letterSpacing }) };
 };
 
 const logoSvg = (bold, semi, c = logoColors.light) => {
@@ -127,6 +158,28 @@ const main = async () => {
   await fs.writeFile(path.join(brandDir, 'logo-white.svg'), logoDark);
   await fs.writeFile(path.join(publicDir, 'favicon.svg'), icon);
   await fs.writeFile(path.join(srcBrandDir, 'logo-themed.svg'), logoSvg(bold, semi, logoColors.themed));
+
+  // Logo pack for placing on photos and other material (transparent backgrounds), also used by the logo stamper
+  // tool at /brand.
+  const mark = markSvg(logoColors.light);
+  const markWhite = markSvg({ nibLeft: white, nibRight: white, smile: white });
+  const badge = badgeSvg(logo);
+  for (const [name, svg] of [
+    ['mark.svg', mark],
+    ['mark-white.svg', markWhite],
+    ['logo-badge.svg', badge],
+  ]) {
+    await fs.writeFile(path.join(brandDir, name), svg);
+    await fs.writeFile(path.join(srcBrandDir, name), svg);
+  }
+  await fs.writeFile(path.join(srcBrandDir, 'logo.svg'), logo);
+  await fs.writeFile(path.join(srcBrandDir, 'logo-white.svg'), logoDark);
+  await sharp(Buffer.from(mark), { density: 600 }).resize({ height: 1024 }).png().toFile(path.join(brandDir, 'mark.png'));
+  await sharp(Buffer.from(markWhite), { density: 600 })
+    .resize({ height: 1024 })
+    .png()
+    .toFile(path.join(brandDir, 'mark-white.png'));
+  await sharp(Buffer.from(badge), { density: 300 }).resize({ width: 1600 }).png().toFile(path.join(brandDir, 'logo-badge.png'));
   await fs.writeFile(path.join(srcBrandDir, 'icon.svg'), icon);
 
   await fs.writeFile(path.join(brandDir, 'icon-1024.png'), await png(icon, 1024));
@@ -143,6 +196,27 @@ const main = async () => {
   await sharp(Buffer.from(logoDark), { density: 300 }).resize({ width: 1600 }).png().toFile(path.join(brandDir, 'logo-white.png'));
   // Square profile picture for Instagram / WhatsApp.
   await sharp(Buffer.from(maskableSvg()), { density: 300 }).resize(1080, 1080).png().toFile(path.join(brandDir, 'profile-1080.png'));
+
+  // Logo centred on the brand ivory: a square post (1080×1080) and a story/status picture (1080×1920).
+  const onIvory = async (width, height, logoWidth, file) => {
+    const art = await sharp(Buffer.from(logo), { density: 300 }).resize({ width: logoWidth }).png().toBuffer();
+    const { height: artHeight } = await sharp(art).metadata();
+    // Drawn on a wide canvas and trimmed to the actual text, so it can be centred exactly.
+    const site = textPath(semi, 'englishkids.ir', 10, 40, 40, 0.06);
+    const siteSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="56"><path d="${site.d}" fill="${colors.green}"/></svg>`;
+    const sitePng = await sharp(Buffer.from(siteSvg)).trim().png().toBuffer();
+    const { width: siteWidth } = await sharp(sitePng).metadata();
+    const top = Math.round((height - artHeight) / 2);
+    await sharp({ create: { width, height, channels: 4, background: colors.cream } })
+      .composite([
+        { input: art, left: Math.round((width - logoWidth) / 2), top },
+        { input: sitePng, left: Math.round((width - siteWidth) / 2), top: height - 140 },
+      ])
+      .png()
+      .toFile(path.join(brandDir, file));
+  };
+  await onIvory(1080, 1080, 860, 'logo-square-1080.png');
+  await onIvory(1080, 1920, 900, 'logo-story-1080x1920.png');
 
   // Social share image (Open Graph) 1200x630.
   const logoPng = await sharp(Buffer.from(logo), { density: 300 }).resize({ width: 620 }).png().toBuffer();

@@ -25,6 +25,7 @@ import { subPages } from './navigation';
 const PlayPage = lazy(() => import('./pages/PlayPage'));
 const LevelTestPage = lazy(() => import('./pages/LevelTestPage'));
 const ParentsPage = lazy(() => import('./pages/ParentsPage'));
+const BrandPage = lazy(() => import('./pages/BrandPage'));
 
 function Home() {
   return (
@@ -45,11 +46,13 @@ function Home() {
 }
 
 export default function App() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const requested = usePage();
   // A switched-off page falls back to the home page.
   const page: Page =
-    (requested === '/level-test' && !features.levelTest) || (requested === '/parents' && !features.parentsCorner)
+    (requested === '/level-test' && !features.levelTest) ||
+    (requested === '/parents' && !features.parentsCorner) ||
+    (requested === '/brand' && !features.brandTool)
       ? '/'
       : requested;
   useScrollOnNavigate();
@@ -57,8 +60,16 @@ export default function App() {
   const { active: profile } = useProfiles();
 
   useEffect(() => {
-    document.title = page === '/' ? t.meta.title : `${t.nav[subPages[page].navKey]} | ${t.meta.title}`;
-  }, [page, t]);
+    const name =
+      page === '/brand'
+        ? lang === 'fa'
+          ? 'ابزار لوگو'
+          : 'Logo tool'
+        : page === '/'
+          ? ''
+          : t.nav[subPages[page].navKey];
+    document.title = name ? `${name} | ${t.meta.title}` : t.meta.title;
+  }, [page, t, lang]);
 
   return (
     <>
@@ -69,6 +80,7 @@ export default function App() {
           {page === '/play' && <PlayPage />}
           {page === '/level-test' && <LevelTestPage />}
           {page === '/parents' && <ParentsPage />}
+          {page === '/brand' && <BrandPage />}
         </Suspense>
       </main>
       <Footer />

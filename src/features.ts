@@ -16,6 +16,9 @@ export const features = {
   seasonal: true, // Nowruz, Yalda, Halloween, Christmas word packs
   stickerBook: true, // collected stickers and a printable certificate
   profiles: true, // "Who's playing?": separate progress for each child on the same device
+
+  // Tools for the teacher (not linked from the site's menus)
+  brandTool: true, // /brand: put the logo on photos and other material
 };
 
 export type Feature = keyof typeof features;

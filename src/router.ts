@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 // from a sub-page go to that section on the home page. Cloudflare serves index.html for every path (wrangler.toml).
 // Query parameters carry in-page state that should be linkable, e.g. /play?activity=stories or /play?game=quiz.
 
-export const pages = ['/', '/play', '/level-test', '/parents'] as const;
+export const pages = ['/', '/play', '/level-test', '/parents', '/brand'] as const;
 export type Page = (typeof pages)[number];
 
 const currentPage = (): Page => {
