@@ -44,8 +44,8 @@ export default function Why() {
         })}
       </div>
 
-      <Reveal className="mt-16 relative overflow-hidden rounded-[2rem] bg-band p-8 text-white sm:p-10">
-        <p className="text-center text-lg font-bold text-white/85">★ {t.benefits.eyebrow}</p>
+      <Reveal className="mt-16 relative overflow-hidden rounded-[2rem] bg-band p-8 text-band-ink sm:p-10">
+        <p className="text-center text-lg font-bold text-band-ink/85">★ {t.benefits.eyebrow}</p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {t.benefits.items.map((b, i) => {
             const { Icon, tone } = benefitIcons[i];
@@ -58,11 +58,11 @@ export default function Why() {
                 transition={{ delay: 0.1 + i * 0.1, type: 'spring', stiffness: 200, damping: 16 }}
                 className="flex flex-col items-center text-center"
               >
-                <div className={`grid size-16 place-items-center rounded-full bg-surface ${tone} shadow-lg ring-4 ring-white/15`}>
+                <div className={`grid size-16 place-items-center rounded-full bg-surface ${tone} shadow-lg ring-4 ring-band-ink/15`}>
                   <Icon className="size-8" fill="currentColor" strokeWidth={1.5} />
                 </div>
                 <p className="mt-4 text-xl font-black">{b.title}</p>
-                <p className="mt-1 text-white/85">{b.text}</p>
+                <p className="mt-1 text-band-ink/85">{b.text}</p>
               </motion.div>
             );
           })}

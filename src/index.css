@@ -34,6 +34,9 @@
   --color-berry-100: #ffe1e6;
   --color-berry-500: #ef4f6b;
 
+  /* Text on .bg-band panels (white on the green gradient; palettes with a light band switch it to dark). */
+  --color-band-ink: #ffffff;
+
   --shadow-soft: 0 10px 30px -12px rgb(31 42 55 / 0.18);
   --shadow-pop: 0 18px 40px -16px rgb(0 155 77 / 0.45);
 }
@@ -91,14 +94,27 @@ body {
     color 0.3s ease;
 }
 
-/* Large green panels: a calmer gradient than flat brand green, much deeper in dark mode. */
+/* Logo colours (src/components/Logo.tsx): follow the palette tokens, so the logo changes with the theme. */
 :root {
-  --band-from: #009b4d;
-  --band-to: #006d37;
+  --logo-nib-left: var(--color-leaf-500);
+  --logo-nib-right: var(--color-sun-500);
+  --logo-name: var(--color-ink);
+  --logo-tag: var(--color-leaf-500);
+}
+.dark {
+  --logo-tag: var(--color-sun-500);
+}
+
+/* Large green panels: brand green easing into a slightly deeper green, white text; much deeper in dark mode. */
+:root {
+  --band-from: #2bb673;
+  --band-to: #12a95c;
+  --color-band-ink: #ffffff;
 }
 .dark {
   --band-from: #0f3a25;
   --band-to: #0a2418;
+  --color-band-ink: #ffffff;
 }
 .bg-band {
   background-image: linear-gradient(135deg, var(--band-from), var(--band-to));

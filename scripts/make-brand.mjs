@@ -17,16 +17,38 @@ export const colors = {
   cream: '#FAF5E9',
 };
 
-// Icon artwork on a 512 grid: speech bubble (talking/communication), an "L" for Leila, a sparkle.
-const bubble =
-  'M176 96H336A84 84 0 0 1 420 180V288A84 84 0 0 1 336 372H236L142 432Q124 442 128 422L146 364A84 84 0 0 1 92 288V180A84 84 0 0 1 176 96Z';
-const letter = 'M204 168V290H306';
-const sparkle = 'M350 120Q357 153 390 160Q357 167 350 200Q343 167 310 160Q343 153 350 120Z';
+// Logo mark on a 96 grid: a quotation mark drawn as two pen nibs (writing, speaking) above a smile.
+const nibLeft = 'M10 6h26a4 4 0 0 1 4 4v28L25 66 6 38V10a4 4 0 0 1 4-4Z';
+const nibRight = 'M60 6h26a4 4 0 0 1 4 4v28L75 66 56 38V10a4 4 0 0 1 4-4Z';
+const smile = 'M18 78c8 13 52 13 60 0';
 
-const iconArt = () => `
-  <path d="${bubble}" fill="#FFFFFF"/>
-  <path d="${letter}" fill="none" stroke="${colors.green}" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="${sparkle}" fill="${colors.yellow}"/>`;
+// Paint as an attribute, or as inline style when it is a CSS variable (attributes can't hold var()).
+const paint = (prop, value) => (value.startsWith('var(') ? `style="${prop}:${value}"` : `${prop}="${value}"`);
+
+// Logo colours: fixed brand colours for the image files, and CSS variables for the themed logo the site renders
+// (it follows the colour palette and light/dark mode; the variables are defined in src/index.css).
+const logoColors = {
+  light: { nibLeft: colors.green, nibRight: colors.yellow, smile: colors.green, name: colors.ink, tag: colors.green },
+  dark: { nibLeft: colors.green, nibRight: colors.yellow, smile: colors.green, name: '#FFFFFF', tag: colors.yellow },
+  themed: {
+    nibLeft: 'var(--logo-nib-left)',
+    nibRight: 'var(--logo-nib-right)',
+    smile: 'var(--logo-nib-left)',
+    name: 'var(--logo-name)',
+    tag: 'var(--logo-tag)',
+  },
+};
+
+// The mark in colour (logo) or in one colour (white on the green app icon).
+const markArt = (c) => `
+  <path d="${nibLeft}" ${paint('fill', c.nibLeft)}/>
+  <path d="${nibRight}" ${paint('fill', c.nibRight)}/>
+  <path d="${smile}" fill="none" ${paint('stroke', c.smile)} stroke-width="8" stroke-linecap="round"/>`;
+
+// Icon artwork on a 512 grid: the white mark centred in the safe area of a green tile.
+const white = '#FFFFFF';
+const iconArt = () =>
+  `<g transform="translate(104 100) scale(3.17)">${markArt({ nibLeft: white, nibRight: white, smile: white })}</g>`;
 
 const iconSvg = () => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="116" fill="${colors.green}"/>${iconArt()}
@@ -51,7 +73,7 @@ const textPath = (font, text, x, baseline, size, letterSpacing = 0) => {
   return { d: p.toPathData(2), width: font.getAdvanceWidth(text, size, { letterSpacing }) };
 };
 
-const logoSvg = (bold, semi, { dark = false } = {}) => {
+const logoSvg = (bold, semi, c = logoColors.light) => {
   const iconSize = 168;
   const gap = 36;
   const x = iconSize + gap;
@@ -59,11 +81,10 @@ const logoSvg = (bold, semi, { dark = false } = {}) => {
   const tag = textPath(semi, 'ENGLISH FOR KIDS', x + 4, 152, 34, 0.14);
   const width = Math.ceil(x + Math.max(name.width, tag.width + 4) + 8);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${iconSize}">
-  <g transform="scale(${iconSize / 512})">
-    <rect width="512" height="512" rx="116" fill="${colors.green}"/>${iconArt()}
+  <g transform="scale(${iconSize / 96})">${markArt(c)}
   </g>
-  <path d="${name.d}" fill="${dark ? '#FFFFFF' : colors.ink}"/>
-  <path d="${tag.d}" fill="${dark ? colors.yellow : colors.green}"/>
+  <path d="${name.d}" ${paint('fill', c.name)}/>
+  <path d="${tag.d}" ${paint('fill', c.tag)}/>
 </svg>
 `;
 };
@@ -98,15 +119,14 @@ const main = async () => {
 
   const icon = iconSvg();
   const logo = logoSvg(bold, semi);
-  const logoDark = logoSvg(bold, semi, { dark: true });
+  const logoDark = logoSvg(bold, semi, logoColors.dark);
 
   await fs.writeFile(path.join(brandDir, 'icon.svg'), icon);
   await fs.writeFile(path.join(brandDir, 'icon-maskable.svg'), maskableSvg());
   await fs.writeFile(path.join(brandDir, 'logo.svg'), logo);
   await fs.writeFile(path.join(brandDir, 'logo-white.svg'), logoDark);
   await fs.writeFile(path.join(publicDir, 'favicon.svg'), icon);
-  await fs.writeFile(path.join(srcBrandDir, 'logo.svg'), logo);
-  await fs.writeFile(path.join(srcBrandDir, 'logo-white.svg'), logoDark);
+  await fs.writeFile(path.join(srcBrandDir, 'logo-themed.svg'), logoSvg(bold, semi, logoColors.themed));
   await fs.writeFile(path.join(srcBrandDir, 'icon.svg'), icon);
 
   await fs.writeFile(path.join(brandDir, 'icon-1024.png'), await png(icon, 1024));

@@ -3,8 +3,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Languages, Menu, Moon, Sun, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { useTheme } from '../theme';
-import logo from '../assets/brand/logo.svg';
-import logoWhite from '../assets/brand/logo-white.svg';
+import Logo from './Logo';
 
 const sections = ['about', 'classes', 'play', 'gallery', 'faq', 'contact'] as const;
 
@@ -42,7 +41,7 @@ export default function Navbar() {
         }`}
       >
         <a href="#top" className="shrink-0" aria-label="Miss Leila — English for Kids">
-          <img src={theme === 'dark' ? logoWhite : logo} alt="Miss Leila — English for Kids" className="h-10 w-auto sm:h-11" />
+          <Logo className="h-10 sm:h-11" />
         </a>
 
         <ul className="hidden items-center gap-1 lg:flex">

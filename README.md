@@ -69,5 +69,13 @@ Put the **site key** in `turnstileSiteKey` in `src/content.ts`, and add the **se
 | `brand/profile-1080.png` | Instagram & WhatsApp profile picture |
 | `public/favicon.*`, `public/icon-*.png`, `public/apple-touch-icon.png` | Website icons |
 | `public/og-image.png` | Link preview image when the site is shared |
+| `src/assets/brand/logo-themed.svg` | Logo shown on the site; its colours are CSS variables (`--logo-*` in `src/index.css`), so it follows the palette and light/dark mode |
 
+Logo mark: "Nib Quotes", a quotation mark drawn as two pen nibs above a smile.
 Colors: green `#009B4D`, yellow `#FFCC00`, ivory `#FAF5E9`, ink `#1F2A37` (from the "Dark Green, Ivory and Yellow" scheme). Fonts: Fredoka (Latin), Vazirmatn (Persian).
+
+## Trying other colour palettes
+
+`npm run dev` shows a 🎨 button (bottom corner) that applies one of ~60 trial palettes (`src/palettes.ts`) to the whole
+site, in light and dark mode. It is hidden on the published site; add `?palettes` to the URL to show it there.
+To adopt a palette permanently, copy its colours into the tokens in `src/index.css` and `scripts/make-brand.mjs`.

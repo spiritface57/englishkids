@@ -178,19 +178,19 @@ export default function Booking() {
   return (
     <Section id="booking" className="bg-band">
       <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-20 -start-20 size-80 rounded-full bg-white/5" />
-        <div className="absolute -bottom-24 -end-10 size-96 rounded-full bg-white/5" />
+        <div className="absolute -top-20 -start-20 size-80 rounded-full bg-band-ink/5" />
+        <div className="absolute -bottom-24 -end-10 size-96 rounded-full bg-band-ink/5" />
         <div className="absolute top-20 end-[12%] size-16 rotate-12 rounded-2xl bg-sun-400/80" />
       </div>
 
       <div className="relative grid gap-10 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-        <div className="text-white lg:sticky lg:top-28">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold">
+        <div className="text-band-ink lg:sticky lg:top-28">
+          <span className="inline-flex items-center gap-2 rounded-full bg-band-ink/15 px-4 py-1.5 text-sm font-bold">
             <CalendarHeart className="size-4" />
             {b.eyebrow}
           </span>
           <h2 className="mt-4 text-3xl leading-tight font-black sm:text-4xl">{b.title}</h2>
-          <p className="mt-4 text-lg leading-8 text-white/85">{b.lead}</p>
+          <p className="mt-4 text-lg leading-8 text-band-ink/85">{b.lead}</p>
           <a
             href={links.whatsapp(t.contactSection.waDefault)}
             target="_blank"
