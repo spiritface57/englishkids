@@ -2,11 +2,11 @@ import { motion } from 'motion/react';
 import { useI18n } from '../i18n';
 import { Reveal, Section, SectionHeading } from './ui';
 
-// Themes taken from the Instagram highlights (Yalda, Jelly making, Teacher's Day).
+// One style per item in content.ts → activities (story hour, drama & role-play, songs & rhymes).
 const styles = [
-  { emoji: '🍉', bg: 'bg-berry-100', ring: 'ring-berry-500/20' },
-  { emoji: '🍮', bg: 'bg-sun-100', ring: 'ring-sun-500/20' },
-  { emoji: '💐', bg: 'bg-leaf-100', ring: 'ring-leaf-500/20' },
+  { emoji: '📚', bg: 'bg-berry-100', ring: 'ring-berry-500/20' },
+  { emoji: '🎭', bg: 'bg-sun-100', ring: 'ring-sun-500/20' },
+  { emoji: '🎵', bg: 'bg-leaf-100', ring: 'ring-leaf-500/20' },
 ];
 
 export default function Activities() {

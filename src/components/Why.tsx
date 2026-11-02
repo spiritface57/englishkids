@@ -1,5 +1,15 @@
 import { motion } from 'motion/react';
-import { BookOpenText, Heart, Laptop, MessageCircleMore, MessagesSquare, Puzzle, ShieldCheck, Star, Users } from 'lucide-react';
+import {
+  BookOpenText,
+  Heart,
+  Laptop,
+  MessageCircleMore,
+  MessagesSquare,
+  Puzzle,
+  ShieldCheck,
+  Star,
+  Users,
+} from 'lucide-react';
 import { useI18n } from '../i18n';
 import { Reveal, Section, SectionHeading } from './ui';
 
@@ -12,10 +22,10 @@ const whyIcons = [
 ];
 
 const benefitIcons = [
-  { Icon: Heart, tone: 'text-berry-500' },
-  { Icon: Star, tone: 'text-sun-500' },
-  { Icon: BookOpenText, tone: 'text-leaf-500' },
-  { Icon: MessagesSquare, tone: 'text-grape-500' },
+  { Icon: Heart, tone: 'text-berry-500', bg: 'bg-berry-100', tilt: -2.5 },
+  { Icon: Star, tone: 'text-sun-600', bg: 'bg-sun-100', tilt: 2 },
+  { Icon: BookOpenText, tone: 'text-leaf-600', bg: 'bg-leaf-100', tilt: -2 },
+  { Icon: MessagesSquare, tone: 'text-grape-500', bg: 'bg-grape-100', tilt: 2.5 },
 ];
 
 export default function Why() {
@@ -33,7 +43,9 @@ export default function Why() {
                 whileHover={{ y: -6 }}
                 className="group h-full rounded-3xl border border-ink/5 bg-cream p-7 transition-shadow hover:shadow-soft"
               >
-                <div className={`grid size-14 place-items-center rounded-2xl ${tone} transition group-hover:scale-110 group-hover:-rotate-6`}>
+                <div
+                  className={`grid size-14 place-items-center rounded-2xl ${tone} transition group-hover:scale-110 group-hover:-rotate-6`}
+                >
                   <Icon className="size-7" />
                 </div>
                 <h3 className="mt-5 text-xl font-black">{it.title}</h3>
@@ -44,30 +56,32 @@ export default function Why() {
         })}
       </div>
 
-      <Reveal className="mt-16 relative overflow-hidden rounded-[2rem] bg-band p-8 text-band-ink sm:p-10">
-        <p className="text-center text-lg font-bold text-band-ink/85">★ {t.benefits.eyebrow}</p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Benefits as playful pastel "stickers", slightly tilted like they were stuck on by hand. */}
+      <div className="mt-16">
+        <p className="text-center text-lg font-black">★ {t.benefits.eyebrow}</p>
+        <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
           {t.benefits.items.map((b, i) => {
-            const { Icon, tone } = benefitIcons[i];
+            const { Icon, tone, bg, tilt } = benefitIcons[i];
             return (
               <motion.div
                 key={b.title}
-                initial={{ opacity: 0, scale: 0.85 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, scale: 0.85, rotate: 0 }}
+                whileInView={{ opacity: 1, scale: 1, rotate: tilt }}
+                whileHover={{ rotate: 0, y: -6, scale: 1.03 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.1 + i * 0.1, type: 'spring', stiffness: 200, damping: 16 }}
-                className="flex flex-col items-center text-center"
+                className={`flex flex-col items-center rounded-3xl border-4 border-surface p-5 text-center shadow-soft sm:p-6 ${bg}`}
               >
-                <div className={`grid size-16 place-items-center rounded-full bg-surface ${tone} shadow-lg ring-4 ring-band-ink/15`}>
+                <div className={`grid size-16 place-items-center rounded-full bg-surface shadow-soft ${tone}`}>
                   <Icon className="size-8" fill="currentColor" strokeWidth={1.5} />
                 </div>
-                <p className="mt-4 text-xl font-black">{b.title}</p>
-                <p className="mt-1 text-band-ink/85">{b.text}</p>
+                <p className="mt-4 text-lg font-black sm:text-xl">{b.title}</p>
+                <p className="mt-1 text-sm leading-6 text-ink/70 sm:text-base">{b.text}</p>
               </motion.div>
             );
           })}
         </div>
-      </Reveal>
+      </div>
     </Section>
   );
 }

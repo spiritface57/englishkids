@@ -161,12 +161,12 @@ export const content = {
     },
     activities: {
       eyebrow: 'فراتر از کلاس',
-      title: 'جشن‌ها و فعالیت‌های خلاقانه',
-      lead: 'در کنار درس، با جشن‌ها و کارهای عملی، انگلیسی را در زندگی واقعی تجربه می‌کنیم.',
+      title: 'فعالیت‌های خلاقانه‌ی کلاس',
+      lead: 'در کنار درس، با قصه، نمایش و آهنگ، انگلیسی را در زندگی واقعی تجربه می‌کنیم.',
       items: [
-        { title: 'شب یلدا', text: 'جشن یلدا با قصه، بازی و واژه‌های تازه.' },
-        { title: 'ژله‌سازی', text: 'آشپزی و دستور پخت، قدم‌به‌قدم به انگلیسی.' },
-        { title: 'روز معلم', text: 'لحظه‌های شیرین و به‌یادماندنی با بچه‌ها.' },
+        { title: 'ساعت قصه', text: 'قصه‌خوانی گروهی با کتاب‌های تصویری انگلیسی.' },
+        { title: 'نمایش و نقش‌آفرینی', text: 'بچه‌ها قصه‌ها را به انگلیسی بازی می‌کنند و با اعتمادبه‌نفس حرف می‌زنند.' },
+        { title: 'شعر و آهنگ', text: 'یادگیری کلمه‌ها و تلفظ با آهنگ‌های شاد و حرکت.' },
       ],
     },
     gallery: {
@@ -383,12 +383,12 @@ export const content = {
     },
     activities: {
       eyebrow: 'Beyond the classroom',
-      title: 'Celebrations & creative activities',
-      lead: 'Alongside lessons, we live English in real life through celebrations and hands-on fun.',
+      title: 'Creative class activities',
+      lead: 'Alongside lessons, we live English in real life through stories, drama and songs.',
       items: [
-        { title: 'Yalda night', text: 'Celebrating Yalda with stories, games and new words.' },
-        { title: 'Jelly making', text: 'Cooking and following a recipe, step by step in English.' },
-        { title: 'Teacher’s Day', text: 'Sweet, memorable moments with the kids.' },
+        { title: 'Story hour', text: 'Reading English picture books together.' },
+        { title: 'Drama & role-play', text: 'Kids act out stories in English and speak with confidence.' },
+        { title: 'Songs & rhymes', text: 'Learning words and pronunciation with happy songs and movement.' },
       ],
     },
     gallery: {
