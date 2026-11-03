@@ -1,6 +1,7 @@
 // Switch site features on or off. A feature that is off is not shown and its code is never loaded.
 export const features = {
   // Sections
+  reviews: true, // parents' reviews: sent from the site, shown after the teacher approves them by email
   levelTest: true, // "How good is my child's English?" placement test for parents
   parentsCorner: true, // tips for parents (Persian/English)
   worksheets: true, // printable worksheets (inside the parents' corner)

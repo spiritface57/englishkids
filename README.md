@@ -50,6 +50,15 @@ Cloudflare dashboard → Turnstile → Add widget, hostnames `englishkids.ir` an
 Put the **site key** in `turnstileSiteKey` in `src/content.ts`, and add the **secret key** to the Worker as the secret
 `TURNSTILE_SECRET_KEY`. Set both or neither: with only the secret set, every form submission is rejected.
 
+## Parents' reviews
+
+Parents send a review from the "Reviews" section (or the direct link `https://englishkids.ir/?review=write#reviews`).
+It is saved as pending and emailed to `EMAIL_TO` with **Publish** and **Delete** buttons; only published reviews are
+shown. The same email's Delete button removes a review later. One review per visitor per day.
+
+Setup: create a KV namespace (Workers & Pages → KV), put its id in the `REVIEWS` binding in `wrangler.toml`, and add
+the secret `REVIEW_SECRET` (any long random text) to the Worker. Without them the form offers WhatsApp instead.
+
 ## Editing content
 
 - All texts (Persian and English): `src/content.ts`

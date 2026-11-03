@@ -11,7 +11,7 @@ export type BookingEmail = {
   country: string;
 };
 
-const escapeHtml = (s: string) =>
+export const escapeHtml = (s: string) =>
   s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 // Iranian local numbers (09…) become 989… for WhatsApp; others are used as entered, without '+'.

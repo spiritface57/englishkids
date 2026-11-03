@@ -89,7 +89,9 @@ export default function Footer() {
     },
     {
       title: t.nav.sections,
-      links: (['about', 'classes', 'gallery', 'faq', 'contact'] as const).map((id) => ({
+      links: (
+        ['about', 'classes', 'gallery', ...(features.reviews ? (['reviews'] as const) : []), 'faq', 'contact'] as const
+      ).map((id) => ({
         href: `#${id}`,
         label: t.nav[id],
       })),

@@ -4,3 +4,5 @@ BREVO_API_KEY=
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+# Signs the publish/delete links in review emails (any long random text).
+REVIEW_SECRET=

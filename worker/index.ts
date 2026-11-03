@@ -1,20 +1,12 @@
-// Cloudflare Worker: serves the built site from ./dist (static assets) and handles POST /api/book.
+// Cloudflare Worker: serves the built site from ./dist (static assets), handles POST /api/book and /api/reviews*.
 // Booking requests are checked with Cloudflare Turnstile (if TURNSTILE_SECRET_KEY is set), then emailed via Brevo,
 // saved to KV and/or sent to Telegram, whichever is configured.
 // When none is configured it returns 503, and the site falls back to sending the request via WhatsApp.
 
 import { bookingHtml, bookingSubject, bookingText, type BookingEmail } from './email';
-
-interface Env {
-  ASSETS: Fetcher;
-  BOOKINGS?: KVNamespace;
-  TELEGRAM_BOT_TOKEN?: string;
-  TELEGRAM_CHAT_ID?: string;
-  TURNSTILE_SECRET_KEY?: string;
-  BREVO_API_KEY?: string;
-  EMAIL_TO?: string;
-  EMAIL_FROM?: string;
-}
+import { sendMail } from './brevo';
+import { handleReviews } from './reviews';
+import { json, str, verifyTurnstile, type Env } from './shared';
 
 type Booking = {
   parentName?: unknown;
@@ -27,11 +19,6 @@ type Booking = {
   turnstileToken?: unknown;
 };
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
-
-const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
-
 // [label, value] pairs from the form; anything malformed or empty is dropped.
 const pairs = (v: unknown): [string, string][] =>
   Array.isArray(v)
@@ -41,34 +28,6 @@ const pairs = (v: unknown): [string, string][] =>
         .map(([k, val]): [string, string] => [str(k, 60), str(val, 300)])
         .filter(([k, val]) => k && val)
     : [];
-
-async function verifyTurnstile(token: string, request: Request, secret: string) {
-  if (!token) return false;
-  const body = new FormData();
-  body.append('secret', secret);
-  body.append('response', token);
-  const ip = request.headers.get('cf-connecting-ip');
-  if (ip) body.append('remoteip', ip);
-  const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body });
-  const outcome = await res.json<{ success: boolean }>();
-  return outcome.success;
-}
-
-async function sendEmail(env: Env, apiKey: string, booking: BookingEmail) {
-  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
-    method: 'POST',
-    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      sender: { name: 'Miss Leila website', email: env.EMAIL_FROM || 'noreply@englishkids.ir' },
-      to: [{ email: env.EMAIL_TO || 'admin@englishkids.ir' }],
-      subject: bookingSubject(booking),
-      textContent: bookingText(booking),
-      htmlContent: bookingHtml(booking),
-    }),
-  });
-  if (!res.ok) console.error('Brevo error', res.status, await res.text());
-  return res.ok;
-}
 
 async function handleBooking(request: Request, env: Env) {
   let data: Booking;
@@ -81,7 +40,10 @@ async function handleBooking(request: Request, env: Env) {
   // Honeypot: bots fill hidden fields. Pretend success.
   if (str(data.website, 200)) return json({ ok: true });
 
-  if (env.TURNSTILE_SECRET_KEY && !(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))) {
+  if (
+    env.TURNSTILE_SECRET_KEY &&
+    !(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))
+  ) {
     return json({ ok: false, error: 'captcha' }, 403);
   }
 
@@ -117,7 +79,12 @@ async function handleBooking(request: Request, env: Env) {
       lang: record.lang,
       country: record.country,
     };
-    delivered = (await sendEmail(env, env.BREVO_API_KEY, booking)) || delivered;
+    delivered =
+      (await sendMail(env, env.BREVO_API_KEY, {
+        subject: bookingSubject(booking),
+        text: bookingText(booking),
+        html: bookingHtml(booking),
+      })) || delivered;
   }
 
   if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
@@ -139,6 +106,7 @@ export default {
     if (pathname === '/api/book') {
       return request.method === 'POST' ? handleBooking(request, env) : json({ ok: false }, 405);
     }
+    if (pathname.startsWith('/api/reviews')) return handleReviews(request, env, pathname);
     return env.ASSETS.fetch(request);
   },
 } satisfies ExportedHandler<Env>;

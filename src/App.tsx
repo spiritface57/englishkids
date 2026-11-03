@@ -8,6 +8,7 @@ import PlayTeaser from './components/PlayTeaser';
 import Activities from './components/Activities';
 import Gallery from './components/Gallery';
 import Steps from './components/Steps';
+import Reviews from './components/Reviews';
 import Booking from './components/Booking';
 import Faq from './components/Faq';
 import Contact from './components/Contact';
@@ -37,6 +38,7 @@ function Home() {
       <PlayTeaser />
       <Activities />
       <Gallery />
+      {features.reviews && <Reviews />}
       <Steps />
       <Booking />
       <Faq />
