@@ -1,11 +1,22 @@
-import { motion } from 'motion/react';
 import { CheckCircle2, MapPin, MonitorSmartphone, User, Users } from 'lucide-react';
 import { useI18n } from '../i18n';
-import { Reveal, Section, SectionHeading } from './ui';
+import { Reveal, Section, SectionHeading, TiltCard } from './ui';
 
 const typeStyles = [
-  { Icon: User, card: 'bg-surface', badge: 'bg-sun-100 text-sun-700', icon: 'bg-sun-500 !text-night', check: 'text-sun-500' },
-  { Icon: Users, card: 'bg-surface', badge: 'bg-grape-100 text-grape-600', icon: 'bg-grape-500', check: 'text-grape-500' },
+  {
+    Icon: User,
+    card: 'bg-surface',
+    badge: 'bg-sun-100 text-sun-700',
+    icon: 'bg-sun-500 !text-night',
+    check: 'text-sun-500',
+  },
+  {
+    Icon: Users,
+    card: 'bg-surface',
+    badge: 'bg-grape-100 text-grape-600',
+    icon: 'bg-grape-500',
+    check: 'text-grape-500',
+  },
 ];
 const modeIcons = [MonitorSmartphone, MapPin];
 
@@ -20,10 +31,11 @@ export default function Classes() {
           const s = typeStyles[i];
           return (
             <Reveal key={c.title} delay={i * 0.1}>
-              <motion.article
-                whileHover={{ y: -8, rotate: i === 0 ? -0.6 : 0.6 }}
+              <TiltCard
+                max={3}
+                whileHover={{ y: -8 }}
                 transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-                className={`relative h-full overflow-hidden rounded-[2rem] ${s.card} p-8 shadow-soft`}
+                className={`h-full overflow-hidden rounded-[2rem] ${s.card} p-8 shadow-soft`}
               >
                 <div className={`absolute -top-10 -end-10 size-36 rounded-full opacity-15 ${s.icon}`} />
                 <div className="flex items-center justify-between">
@@ -48,7 +60,7 @@ export default function Classes() {
                 >
                   {t.nav.book}
                 </a>
-              </motion.article>
+              </TiltCard>
             </Reveal>
           );
         })}

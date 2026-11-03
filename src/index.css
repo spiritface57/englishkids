@@ -33,6 +33,7 @@
 
   --color-berry-100: #ffe1e6;
   --color-berry-500: #ef4f6b;
+  --color-berry-600: #d33552;
 
   /* Text on .bg-band panels (white on the green gradient; palettes with a light band switch it to dark). */
   --color-band-ink: #ffffff;
@@ -84,6 +85,7 @@
   --color-grape-600: #b7a4f7;
 
   --color-berry-100: #3a1a24;
+  --color-berry-600: #ff8fa3;
 
   --shadow-soft: 0 10px 30px -12px rgb(0 0 0 / 0.6);
 }

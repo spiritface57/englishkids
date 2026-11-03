@@ -1,15 +1,80 @@
-import { motion, type HTMLMotionProps } from 'motion/react';
-import type { ReactNode } from 'react';
+import { motion, useSpring, type HTMLMotionProps, type Variants } from 'motion/react';
+import { useRef, type PointerEvent, type ReactNode } from 'react';
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function Reveal({ delay = 0, y = 24, ...props }: HTMLMotionProps<'div'> & { delay?: number; y?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y, filter: 'blur(6px)' }}
+      whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.7, delay, ease }}
       {...props}
     />
+  );
+}
+
+// A card that tilts slightly towards the mouse, with a soft light following the pointer.
+// Only for a mouse: on touch screens it stays still (tilting under a finger feels odd).
+export function TiltCard({
+  max = 5,
+  className = '',
+  children,
+  onPointerMove,
+  onPointerLeave,
+  ref: outerRef,
+  ...props
+}: Omit<HTMLMotionProps<'div'>, 'children' | 'ref'> & {
+  max?: number;
+  children?: ReactNode;
+  ref?: (el: HTMLDivElement | null) => void;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const spring = { stiffness: 220, damping: 22 };
+  const rotateX = useSpring(0, spring);
+  const rotateY = useSpring(0, spring);
+
+  const move = (e: PointerEvent<HTMLDivElement>) => {
+    onPointerMove?.(e);
+    const el = ref.current;
+    if (!el || e.pointerType !== 'mouse') return;
+    const b = el.getBoundingClientRect();
+    const x = (e.clientX - b.left) / b.width;
+    const y = (e.clientY - b.top) / b.height;
+    rotateY.set((x - 0.5) * 2 * max);
+    rotateX.set(-(y - 0.5) * 2 * max);
+    el.style.setProperty('--spot-x', `${x * 100}%`);
+    el.style.setProperty('--spot-y', `${y * 100}%`);
+  };
+  const leave = (e: PointerEvent<HTMLDivElement>) => {
+    onPointerLeave?.(e);
+    rotateX.set(0);
+    rotateY.set(0);
+  };
+
+  return (
+    <motion.div
+      ref={(el: HTMLDivElement | null) => {
+        ref.current = el;
+        outerRef?.(el);
+      }}
+      style={{ rotateX, rotateY, transformPerspective: 900 }}
+      onPointerMove={move}
+      onPointerLeave={leave}
+      className={`group/tilt relative ${className}`}
+      {...props}
+    >
+      {children}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-300 group-hover/tilt:opacity-100"
+        style={{
+          background:
+            'radial-gradient(380px circle at var(--spot-x, 50%) var(--spot-y, 50%), color-mix(in oklab, var(--color-surface) 45%, transparent), transparent 60%)',
+        }}
+      />
+    </motion.div>
   );
 }
 
@@ -19,6 +84,15 @@ const eyebrowTone: Record<Tone, string> = {
   leaf: 'bg-leaf-100 text-leaf-700',
   sun: 'bg-sun-100 text-sun-700',
   grape: 'bg-grape-100 text-grape-600',
+};
+
+const headingPop: Variants = {
+  hidden: { opacity: 0, scale: 0.6 },
+  show: { opacity: 1, scale: 1, transition: { type: 'spring', stiffness: 320, damping: 18 } },
+};
+const headingRise: Variants = {
+  hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.7, ease } },
 };
 
 export function SectionHeading({
@@ -34,15 +108,39 @@ export function SectionHeading({
   tone?: Tone;
   align?: 'center' | 'start';
 }) {
+  // The badge pops in, then the title and the lead rise one after the other.
   return (
-    <Reveal className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
-      <span className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold ${eyebrowTone[tone]}`}>
-        <span className="text-base">★</span>
+    <motion.div
+      className={align === 'center' ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: '-60px' }}
+      variants={{ show: { transition: { staggerChildren: 0.12 } } }}
+    >
+      <motion.span
+        variants={headingPop}
+        className={`inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold ${eyebrowTone[tone]}`}
+      >
+        <motion.span
+          className="text-base"
+          variants={{
+            hidden: { rotate: -90, scale: 0 },
+            show: { rotate: 0, scale: 1, transition: { type: 'spring', stiffness: 300, damping: 12, delay: 0.15 } },
+          }}
+        >
+          ★
+        </motion.span>
         {eyebrow}
-      </span>
-      <h2 className="mt-4 text-3xl leading-tight font-black text-balance sm:text-4xl">{title}</h2>
-      {lead && <p className="mt-4 text-lg leading-8 text-ink/70 text-pretty">{lead}</p>}
-    </Reveal>
+      </motion.span>
+      <motion.h2 variants={headingRise} className="mt-4 text-3xl leading-tight font-black text-balance sm:text-4xl">
+        {title}
+      </motion.h2>
+      {lead && (
+        <motion.p variants={headingRise} className="mt-4 text-lg leading-8 text-ink/70 text-pretty">
+          {lead}
+        </motion.p>
+      )}
+    </motion.div>
   );
 }
 

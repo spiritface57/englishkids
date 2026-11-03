@@ -1,5 +1,6 @@
 // Trial colour palettes (from piktochart.com/blog/portfolio-color-palette) for choosing the site's colours.
 // Each palette is mapped onto the site's existing tokens (leaf = primary, sun = accent/CTA, grape = secondary,
+// berry = a blend of accent and secondary,
 // cream/surface/ink = page, cards, text), so every component follows without changes. Light and dark are both covered.
 
 export type Palette = {
@@ -256,7 +257,11 @@ const contrast = (a: string, b: string) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 const bySaturation = (list: string[]) => [...list].sort((a, b) => saturation(b) - saturation(a));
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slug = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
 
 function fromSwatches(name: string, swatches: string[]): Palette {
   const byLum = [...swatches].sort((a, b) => luminance(a) - luminance(b));
@@ -309,6 +314,9 @@ const vars = (entries: Record<string, string>) =>
 export function paletteCss(p: Palette) {
   const { primary, accent, secondary, light, dark } = p;
   const dPrimary = dark.primary ?? primary;
+  // The fourth colour (hearts, badges, one of each set of cards) comes from the palette too, so no card keeps the
+  // original pink while the others change.
+  const berry = mix(accent, 55, secondary);
 
   const lightVars = vars({
     '--color-cream': light.bg,
@@ -331,6 +339,9 @@ export function paletteCss(p: Palette) {
     '--color-grape-100': mix(secondary, 18, light.surface),
     '--color-grape-500': secondary,
     '--color-grape-600': mix(secondary, 80, '#000000'),
+    '--color-berry-100': mix(berry, 22, light.surface),
+    '--color-berry-500': berry,
+    '--color-berry-600': mix(berry, 80, '#000000'),
     // A light gradient (soft tints of the primary colour) with dark text on it.
     '--band-from': mix(primary, 14, '#FFFFFF'),
     '--band-to': mix(primary, 32, '#FFFFFF'),
@@ -355,6 +366,8 @@ export function paletteCss(p: Palette) {
     '--color-grape-50': mix(secondary, 14, dark.bg),
     '--color-grape-100': mix(secondary, 24, dark.bg),
     '--color-grape-600': mix(secondary, 55, '#FFFFFF'),
+    '--color-berry-100': mix(berry, 24, dark.bg),
+    '--color-berry-600': mix(berry, 55, '#FFFFFF'),
     '--band-from': mix(dPrimary, 45, dark.bg),
     '--band-to': mix(dPrimary, 22, dark.bg),
     '--color-band-ink': '#FFFFFF',

@@ -40,6 +40,9 @@ export const content = {
       themeDark: 'حالت تیره',
       themeLight: 'حالت روشن',
       toTop: 'بازگشت به بالا',
+      learn: 'یادگیری',
+      menu: 'منو',
+      closeMenu: 'بستن منو',
     },
     hero: {
       badge: 'ثبت‌نام کلاس‌های خصوصی و نیمه‌خصوصی شروع شد',
@@ -306,6 +309,9 @@ export const content = {
       themeDark: 'Dark mode',
       themeLight: 'Light mode',
       toTop: 'Back to top',
+      learn: 'Learn',
+      menu: 'Menu',
+      closeMenu: 'Close menu',
     },
     hero: {
       badge: 'Now enrolling: private & semi-private classes',
