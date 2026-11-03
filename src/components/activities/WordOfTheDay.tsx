@@ -6,9 +6,9 @@ import type { Word } from '../../data/words';
 import { awardSticker } from '../../progress';
 import { canSpeak, speak } from '../wordGame';
 import { kidStorage } from '../../profiles';
+import { dayKey, loadDailyWords, pick, shiftDay } from '../../dailyWord';
 
-// One word per local calendar day, the same for everyone (picked from a hash of the date), plus a visit streak
-// kept in this browser. "Share" draws a square picture card to send to family and friends.
+// One word per local calendar day (see dailyWord.ts), plus a visit streak kept in this browser. "Share" draws a square picture card to send to family and friends.
 
 const KEY = 'wotd-streak';
 const SIZE = 1080;
@@ -32,17 +32,6 @@ const text = {
   },
 };
 
-const dayKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const shiftDay = (d: Date, days: number) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
-
-// FNV-1a: small, stable string hash.
-const hash = (s: string) => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
-  return h >>> 0;
-};
-const pick = (list: Word[], d: Date) => list[hash(dayKey(d)) % list.length];
 
 // Visiting yesterday continues the streak; today keeps it; a longer gap starts again at 1.
 function updateStreak(today: Date) {
@@ -168,10 +157,8 @@ export default function WordOfTheDay() {
 
   useEffect(() => {
     let alive = true;
-    import('../../data/words').then(({ words }) => {
-      if (!alive) return;
-      // Plain code-unit order, so every browser and language setting sorts the same way.
-      setList(words.filter((w) => w.e).sort((a, b) => (a.en < b.en ? -1 : a.en > b.en ? 1 : 0)));
+    loadDailyWords().then((words) => {
+      if (alive) setList(words);
     });
     setStreak(updateStreak(today));
     return () => {
