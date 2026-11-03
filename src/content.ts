@@ -254,6 +254,10 @@ export const content = {
       thanksTitle: 'ممنون از نظر شما! 💚',
       thanksText: 'نظر شما به دست میس لیلا رسید و پس از بررسی در سایت نمایش داده می‌شود.',
       close: 'بستن',
+      translatedFrom: { fa: 'ترجمه‌ی خودکار از فارسی', en: 'ترجمه‌ی خودکار از انگلیسی' },
+      original: 'متن اصلی',
+      showOriginal: 'نمایش متن اصلی',
+      showTranslation: 'نمایش ترجمه',
     },
     contactSection: {
       eyebrow: 'در ارتباط باشیم',
@@ -516,6 +520,10 @@ export const content = {
       thanksTitle: 'Thank you for your review! 💚',
       thanksText: 'Miss Leila has received your review; it will appear on the site once it has been checked.',
       close: 'Close',
+      translatedFrom: { fa: 'Automatically translated from Persian', en: 'Automatically translated from English' },
+      original: 'Original',
+      showOriginal: 'Show original',
+      showTranslation: 'Show translation',
     },
     contactSection: {
       eyebrow: 'Let’s keep in touch',

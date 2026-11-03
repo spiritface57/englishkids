@@ -11,6 +11,7 @@ export interface Env {
   EMAIL_FROM?: string;
   REVIEWS?: KVNamespace;
   REVIEW_SECRET?: string;
+  AI?: Ai;
 }
 
 export const json = (body: unknown, status = 200) =>

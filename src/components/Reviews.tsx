@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { AnimatePresence, motion, useInView } from 'motion/react';
-import { Loader2, MessageSquareHeart, PenLine, Quote, Send, Star, X } from 'lucide-react';
+import { Languages, Loader2, MessageSquareHeart, PenLine, Quote, Send, Star, X } from 'lucide-react';
 import { useI18n } from '../i18n';
 import { links, turnstileSiteKey } from '../content';
 import { useLocation } from '../router';
@@ -16,7 +16,8 @@ type Review = {
   child: string;
   rating: number;
   text: string;
-  lang: string;
+  lang: 'fa' | 'en'; // the language it was written in
+  translation?: { lang: 'fa' | 'en'; name: string; child: string; text: string };
   createdAt: string;
 };
 
@@ -250,6 +251,58 @@ function ReviewForm({ onClose }: { onClose: () => void }) {
   );
 }
 
+// Shown in the language of the site side when a translation exists, labelled, with a button for the original.
+function ReviewCard({ review, index, date }: { review: Review; index: number; date: string }) {
+  const { t, lang } = useI18n();
+  const r = t.reviews;
+  const translated = review.lang !== lang && review.translation?.lang === lang;
+  const [original, setOriginal] = useState(false);
+  const shown = translated && !original ? review.translation! : review;
+
+  return (
+    <motion.figure
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: (index % 3) * 0.08 }}
+      className={`relative mb-5 break-inside-avoid rounded-3xl p-6 ${cardTones[index % cardTones.length]}`}
+    >
+      <Quote className="absolute end-5 top-5 size-8 text-ink/10" />
+      <Stars value={review.rating} className="size-4" />
+      <blockquote dir="auto" className="mt-3 leading-8 whitespace-pre-line text-ink/85">
+        {shown.text}
+      </blockquote>
+      {translated && (
+        <p className="mt-2 flex flex-wrap items-center gap-x-2 text-xs text-ink/50">
+          <Languages className="size-3.5" />
+          {original ? r.original : r.translatedFrom[review.lang]}
+          <button
+            type="button"
+            onClick={() => setOriginal((o) => !o)}
+            className="font-bold text-leaf-700 underline-offset-2 hover:underline"
+          >
+            {original ? r.showTranslation : r.showOriginal}
+          </button>
+        </p>
+      )}
+      <figcaption className="mt-4 flex items-center gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface font-black text-leaf-600">
+          {shown.name.trim().charAt(0)}
+        </span>
+        <span className="min-w-0">
+          <span dir="auto" className="block truncate font-black">
+            {shown.name}
+          </span>
+          <span className="block text-xs text-ink/55">
+            {shown.child && <bdi>{shown.child} · </bdi>}
+            {date}
+          </span>
+        </span>
+      </figcaption>
+    </motion.figure>
+  );
+}
+
 export default function Reviews() {
   const { t, lang } = useI18n();
   const r = t.reviews;
@@ -338,34 +391,7 @@ export default function Reviews() {
         <>
           <div className="mt-10 columns-1 gap-5 sm:columns-2 lg:columns-3">
             {shown.map((review, i) => (
-              <motion.figure
-                key={review.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.08 }}
-                className={`relative mb-5 break-inside-avoid rounded-3xl p-6 ${cardTones[i % cardTones.length]}`}
-              >
-                <Quote className="absolute end-5 top-5 size-8 text-ink/10" />
-                <Stars value={review.rating} className="size-4" />
-                <blockquote dir="auto" className="mt-3 leading-8 whitespace-pre-line text-ink/85">
-                  {review.text}
-                </blockquote>
-                <figcaption className="mt-4 flex items-center gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-full bg-surface font-black text-leaf-600">
-                    {review.name.trim().charAt(0)}
-                  </span>
-                  <span className="min-w-0">
-                    <span dir="auto" className="block truncate font-black">
-                      {review.name}
-                    </span>
-                    <span className="block text-xs text-ink/55">
-                      {review.child && <bdi>{review.child} · </bdi>}
-                      {date(review.createdAt)}
-                    </span>
-                  </span>
-                </figcaption>
-              </motion.figure>
+              <ReviewCard key={review.id} review={review} index={i} date={date(review.createdAt)} />
             ))}
           </div>
           {list.length > FIRST_SHOWN && !showAll && (

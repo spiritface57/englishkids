@@ -101,12 +101,12 @@ async function handleBooking(request: Request, env: Env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
     if (pathname === '/api/book') {
       return request.method === 'POST' ? handleBooking(request, env) : json({ ok: false }, 405);
     }
-    if (pathname.startsWith('/api/reviews')) return handleReviews(request, env, pathname);
+    if (pathname.startsWith('/api/reviews')) return handleReviews(request, env, ctx, pathname);
     return env.ASSETS.fetch(request);
   },
 } satisfies ExportedHandler<Env>;

@@ -85,7 +85,15 @@ const strings = {
 
 const t = (b: BookingEmail) => (b.lang === 'en' ? strings.en : strings.fa);
 
-const colors = { green: '#009B4D', greenDark: '#00703A', yellow: '#FFCC00', ivory: '#FAF5E9', ink: '#1F2A37', muted: '#6B7280', line: '#ECE6D6' };
+const colors = {
+  green: '#009B4D',
+  greenDark: '#00703A',
+  yellow: '#FFCC00',
+  ivory: '#FAF5E9',
+  ink: '#1F2A37',
+  muted: '#6B7280',
+  line: '#ECE6D6',
+};
 
 export function bookingSubject(b: BookingEmail) {
   return t(b).subject(b.parentName);

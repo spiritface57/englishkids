@@ -29,3 +29,7 @@ EMAIL_FROM = "noreply@englishkids.ir"
 [[kv_namespaces]]
 binding = "REVIEWS"
 id = "d4a67bc588b8442f85d283b97bd0427b"
+
+# Workers AI: translates reviews between Persian and English (free daily allowance).
+[ai]
+binding = "AI"

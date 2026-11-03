@@ -6,11 +6,12 @@ import { useTheme } from '../theme';
 import Logo from './Logo';
 import { usePage } from '../router';
 import { enabledSubPages, subPages } from '../navigation';
+import { features } from '../features';
 
 // Home-page sections that the menu links to (links from a sub-page go back to the home page).
-const homeSections = ['about', 'classes', 'gallery', 'faq', 'contact'] as const;
+const homeSections = ['about', 'classes', 'gallery', 'reviews', 'faq', 'contact'] as const;
 // Shown in the desktop bar; the mobile menu shows everything.
-const desktopSections = new Set<string>(['about', 'classes', 'contact']);
+const desktopSections = new Set<string>(['about', 'classes', 'reviews', 'contact']);
 
 export default function Navbar() {
   const { t, lang, toggle } = useI18n();
@@ -22,7 +23,7 @@ export default function Navbar() {
   // On the home page the section in view is highlighted; on a sub-page, that page.
   const active = page === '/' ? spied : page;
 
-  // Menu order: about, classes, the pages, gallery, FAQ, contact.
+  // Menu order: about, classes, the pages, gallery, reviews, FAQ, contact.
   const section = (id: (typeof homeSections)[number]) => ({
     id,
     href: `#${id}`,
@@ -39,6 +40,7 @@ export default function Navbar() {
       desktop: true,
     })),
     section('gallery'),
+    ...(features.reviews ? [section('reviews')] : []),
     section('faq'),
     section('contact'),
   ];
@@ -83,7 +85,7 @@ export default function Navbar() {
                 <a
                   href={it.href}
                   aria-current={active === it.id ? 'page' : undefined}
-                  className={`relative rounded-full px-3 py-2 text-[15px] font-semibold whitespace-nowrap transition-colors ${
+                  className={`relative rounded-full px-2 py-2 text-[15px] xl:px-3 font-semibold whitespace-nowrap transition-colors ${
                     active === it.id ? 'text-leaf-700' : 'text-ink/70 hover:text-ink'
                   }`}
                 >

@@ -12,10 +12,14 @@
 // KV (binding REVIEWS):  review:<id>         every review, pending or published
 //                        reviews:published   the published ones, newest first, in one key so the site needs one read
 //                        review-ip:<hash>    one review per visitor per day (expires after 24 hours)
+//
+// Each review is also translated (Persian ↔ English, worker/translate.ts) so both sides of the site can show it;
+// the email shows the translation too, so the teacher can check it before publishing.
 
 import { sendMail } from './brevo';
 import { escapeHtml } from './email';
 import { json, str, verifyTurnstile, type Env } from './shared';
+import { detectLang, translateReview, type Fields, type Lang } from './translate';
 
 export type Review = {
   id: string;
@@ -23,7 +27,8 @@ export type Review = {
   child: string;
   rating: number;
   text: string;
-  lang: string;
+  lang: Lang; // the language the review is written in
+  translation?: Fields & { lang: Lang };
   createdAt: string;
   status: 'pending' | 'published';
 };
@@ -77,7 +82,32 @@ async function listPublished(request: Request, env: Env) {
   return res;
 }
 
-async function submit(request: Request, env: Env) {
+// Gives up after `seconds` (the translation then stays missing and is tried again on publishing).
+async function addTranslation(env: Env, review: Review, seconds: number): Promise<Review> {
+  if (review.translation) return review;
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), seconds * 1000));
+  const t = await Promise.race([
+    translateReview(env.AI, { name: review.name, child: review.child, text: review.text }, review.lang),
+    timeout,
+  ]);
+  return t ? { ...review, translation: { ...t, lang: review.lang === 'fa' ? 'en' : 'fa' } } : review;
+}
+
+// Runs after the parent already got their answer: translate, save, then email the teacher.
+async function notify(request: Request, env: Env, pending: Review) {
+  const kv = env.REVIEWS!;
+  // The email must not wait too long: background work ends about 30 seconds after the response.
+  const review = await addTranslation(env, pending, 20);
+  if (review !== pending) await kv.put(`review:${review.id}`, JSON.stringify(review));
+  if (!env.BREVO_API_KEY || !env.REVIEW_SECRET) return;
+  const origin = new URL(request.url).origin;
+  const secret = env.REVIEW_SECRET;
+  const link = async (action: Action) =>
+    `${origin}/api/reviews/moderate?id=${review.id}&action=${action}&sig=${await sign(secret, review.id, action)}`;
+  await sendMail(env, env.BREVO_API_KEY, reviewEmail(review, await link('publish'), await link('delete')));
+}
+
+async function submit(request: Request, env: Env, ctx: ExecutionContext) {
   if (!env.REVIEWS || !env.REVIEW_SECRET) return json({ ok: false, error: 'not_configured' }, 503);
 
   let data: Record<string, unknown>;
@@ -124,20 +154,14 @@ async function submit(request: Request, env: Env) {
     child,
     rating,
     text,
-    lang: str(data.lang, 5) === 'en' ? 'en' : 'fa',
+    lang: detectLang(text),
     createdAt: new Date().toISOString(),
     status: 'pending',
   };
   await env.REVIEWS.put(`review:${review.id}`, JSON.stringify(review));
   if (ipKey) await env.REVIEWS.put(ipKey, '1', { expirationTtl: 86400 });
 
-  if (env.BREVO_API_KEY) {
-    const origin = new URL(request.url).origin;
-    const secret = env.REVIEW_SECRET;
-    const link = async (action: Action) =>
-      `${origin}/api/reviews/moderate?id=${review.id}&action=${action}&sig=${await sign(secret, review.id, action)}`;
-    await sendMail(env, env.BREVO_API_KEY, reviewEmail(review, await link('publish'), await link('delete')));
-  }
+  ctx.waitUntil(notify(request, env, review));
   return json({ ok: true });
 }
 
@@ -181,7 +205,8 @@ async function moderate(request: Request, env: Env) {
   const published = await readPublished(env.REVIEWS);
   const others = published.filter((r) => r.id !== id);
   if (action === 'publish') {
-    const updated: Review = { ...review, status: 'published' };
+    // Normally translated already when it was sent; try again if that failed.
+    const updated: Review = { ...(await addTranslation(env, review, 25)), status: 'published' };
     await env.REVIEWS.put(`review:${id}`, JSON.stringify(updated));
     const list = [toPublic(updated), ...others]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -202,10 +227,10 @@ async function moderate(request: Request, env: Env) {
   );
 }
 
-export async function handleReviews(request: Request, env: Env, pathname: string) {
+export async function handleReviews(request: Request, env: Env, ctx: ExecutionContext, pathname: string) {
   if (pathname === '/api/reviews') {
     if (request.method === 'GET') return listPublished(request, env);
-    if (request.method === 'POST') return submit(request, env);
+    if (request.method === 'POST') return submit(request, env, ctx);
   }
   if (pathname === '/api/reviews/moderate' && (request.method === 'GET' || request.method === 'POST')) {
     return moderate(request, env);
@@ -220,10 +245,18 @@ const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
 function reviewCard(r: Review) {
   const e = escapeHtml;
+  const t = r.translation;
+  const translation = t
+    ? `<div style="border-top:1px dashed #D9D2BF;margin-top:12px;padding-top:10px;">
+    <p style="${font}margin:0;color:#6B7280;font-size:12px;">ترجمه‌ی خودکار به ${t.lang === 'en' ? 'انگلیسی' : 'فارسی'} (برای سمت ${t.lang === 'en' ? 'انگلیسی' : 'فارسی'} سایت):</p>
+    <p dir="auto" style="${font}margin:8px 0;color:#1F2A37;font-size:15px;line-height:1.8;white-space:pre-wrap;word-break:break-word;">${e(t.text)}</p>
+    <p dir="auto" style="${font}margin:0;color:#6B7280;font-size:13px;">— ${e(t.name)}${t.child ? ` · ${e(t.child)}` : ''}</p>
+  </div>`
+    : '';
   return `<div style="background:#FAF5E9;border-radius:16px;padding:16px 18px;margin:16px 0;text-align:right;">
     <div style="color:#F5A524;font-size:22px;letter-spacing:2px;">${stars(r.rating)}</div>
     <p dir="auto" style="${font}margin:10px 0;color:#1F2A37;font-size:16px;line-height:1.9;white-space:pre-wrap;word-break:break-word;">${e(r.text)}</p>
-    <p dir="auto" style="${font}margin:0;color:#6B7280;font-size:14px;">— ${e(r.name)}${r.child ? ` · ${e(r.child)}` : ''}</p>
+    <p dir="auto" style="${font}margin:0;color:#6B7280;font-size:14px;">— ${e(r.name)}${r.child ? ` · ${e(r.child)}` : ''}</p>${translation}
   </div>`;
 }
 
@@ -255,6 +288,7 @@ function reviewEmail(r: Review, publishUrl: string, deleteUrl: string) {
       `نام: ${r.name}${r.child ? ` (${r.child})` : ''}`,
       '',
       r.text,
+      ...(r.translation ? ['', `ترجمه: ${r.translation.text}`] : []),
       '',
       `انتشار در سایت: ${publishUrl}`,
       `حذف: ${deleteUrl}`,
@@ -274,7 +308,7 @@ function reviewEmail(r: Review, publishUrl: string, deleteUrl: string) {
         ${button(deleteUrl, '✕ حذف', '#E5484D')}
       </td></tr>
       <tr><td style="padding:20px 28px 24px;text-align:right;">
-        <p style="${font}margin:0;color:#6B7280;font-size:12px;">ارسال‌شده از فرم نظرات englishkids.ir · زبان سایت: ${r.lang === 'en' ? 'انگلیسی' : 'فارسی'}</p>
+        <p style="${font}margin:0;color:#6B7280;font-size:12px;">ارسال‌شده از فرم نظرات englishkids.ir · زبان نظر: ${r.lang === 'en' ? 'انگلیسی' : 'فارسی'}</p>
       </td></tr>
     </table>
   </td></tr></table>
