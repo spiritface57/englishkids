@@ -3,7 +3,8 @@
 //   POST /api/reviews           a parent submits a review (Turnstile-checked) → stored as pending, teacher gets an email
 //   GET  /api/reviews           the published reviews (cached at Cloudflare's edge for a few minutes)
 //   GET  /api/reviews/moderate  the page the email's buttons open: shows the review with a confirm button
-//   POST /api/reviews/moderate  publishes or deletes it
+//                               (for publishing, the translation sits in editable fields so the teacher can fix it)
+//   POST /api/reviews/moderate  publishes (with the translation as submitted) or deletes it
 //
 // The email links carry an HMAC signature (secret REVIEW_SECRET), so only someone with the email can moderate.
 // Opening a link only shows a confirm page; the change needs a button press, so mail scanners that open links
@@ -45,7 +46,13 @@ const clean = (v: unknown, max: number) => str(v, max).replace(/[\u0000-\u0009\u
 
 const bytesToHex = (b: ArrayBuffer) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
 
-async function sign(secret: string, id: string, action: Action) {
+// Publish links stop working after this long; delete links don't expire, since the email is the teacher's only way
+// to take a review down later.
+const PUBLISH_LINK_DAYS = 30;
+// Publish links sent before expiry existed carry no `exp`; they're accepted only for reviews submitted before then.
+const NO_EXPIRY_BEFORE = '2026-11-05T00:00:00Z';
+
+async function sign(secret: string, id: string, action: Action, exp = '') {
   const key = await crypto.subtle.importKey(
     'raw',
     new TextEncoder().encode(secret),
@@ -53,7 +60,9 @@ async function sign(secret: string, id: string, action: Action) {
     false,
     ['sign'],
   );
-  return bytesToHex(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}:${action}`)));
+  return bytesToHex(
+    await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(exp ? `${id}:${action}:${exp}` : `${id}:${action}`)),
+  );
 }
 
 // Constant-time comparison, so the signature can't be guessed byte by byte.
@@ -99,16 +108,27 @@ async function notify(request: Request, env: Env, pending: Review) {
   // The email must not wait too long: background work ends about 30 seconds after the response.
   const review = await addTranslation(env, pending, 20);
   if (review !== pending) await kv.put(`review:${review.id}`, JSON.stringify(review));
-  if (!env.BREVO_API_KEY || !env.REVIEW_SECRET) return;
-  const origin = new URL(request.url).origin;
+  if (!env.REVIEW_SECRET) return;
+  const url = new URL(request.url);
+  const origin = url.origin;
   const secret = env.REVIEW_SECRET;
-  const link = async (action: Action) =>
-    `${origin}/api/reviews/moderate?id=${review.id}&action=${action}&sig=${await sign(secret, review.id, action)}`;
-  await sendMail(env, env.BREVO_API_KEY, reviewEmail(review, await link('publish'), await link('delete')));
+  const link = async (action: Action) => {
+    const exp = action === 'publish' ? String(Math.floor(Date.now() / 1000) + PUBLISH_LINK_DAYS * 86400) : '';
+    const sig = await sign(secret, review.id, action, exp);
+    return `${origin}/api/reviews/moderate?id=${review.id}&action=${action}${exp ? `&exp=${exp}` : ''}&sig=${sig}`;
+  };
+  if (env.BREVO_API_KEY) {
+    await sendMail(env, env.BREVO_API_KEY, reviewEmail(review, await link('publish'), await link('delete')));
+  } else if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    // Local testing without email: print the links the email would contain.
+    console.log(`\n[review ${review.id}]\n  publish: ${await link('publish')}\n  delete:  ${await link('delete')}\n`);
+  }
 }
 
 async function submit(request: Request, env: Env, ctx: ExecutionContext) {
-  if (!env.REVIEWS || !env.REVIEW_SECRET) return json({ ok: false, error: 'not_configured' }, 503);
+  if (!env.REVIEWS || !env.REVIEW_SECRET || !env.TURNSTILE_SECRET_KEY) {
+    return json({ ok: false, error: 'not_configured' }, 503);
+  }
 
   let data: Record<string, unknown>;
   try {
@@ -120,10 +140,7 @@ async function submit(request: Request, env: Env, ctx: ExecutionContext) {
   // Honeypot: bots fill hidden fields. Pretend success.
   if (str(data.website, 200)) return json({ ok: true });
 
-  if (
-    env.TURNSTILE_SECRET_KEY &&
-    !(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))
-  ) {
+  if (!(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))) {
     return json({ ok: false, error: 'captcha' }, 403);
   }
 
@@ -174,39 +191,55 @@ async function moderate(request: Request, env: Env) {
   const id = params.get('id') ?? '';
   const action = params.get('action');
   const sig = params.get('sig') ?? '';
+  const exp = params.get('exp') ?? '';
   if (!/^[0-9a-f-]{36}$/.test(id) || (action !== 'publish' && action !== 'delete')) {
     return page('لینک نامعتبر', '<p>این لینک کامل نیست.</p>', 400);
   }
-  if (!sameString(sig, await sign(env.REVIEW_SECRET, id, action))) {
+  if (exp && !/^\d{1,12}$/.test(exp)) return page('لینک نامعتبر', '<p>این لینک کامل نیست.</p>', 400);
+  if (!sameString(sig, await sign(env.REVIEW_SECRET, id, action, exp))) {
     return page('لینک نامعتبر', '<p>امضای این لینک درست نیست.</p>', 403);
+  }
+  if (exp && Number(exp) < Date.now() / 1000) {
+    return page('لینک منقضی شده', '<p>این لینک انتشار دیگر معتبر نیست.</p>', 410);
   }
 
   const review = await env.REVIEWS.get<Review>(`review:${id}`, 'json');
   if (!review) return page('پیدا نشد', '<p>این نظر قبلاً حذف شده است.</p>', 404);
+  if (action === 'publish' && !exp && review.createdAt >= NO_EXPIRY_BEFORE) {
+    return page('لینک نامعتبر', '<p>امضای این لینک درست نیست.</p>', 403);
+  }
 
   if (request.method === 'GET') {
-    const label = action === 'publish' ? 'بله، در سایت منتشر شود' : 'بله، حذف شود';
-    const color = action === 'publish' ? '#009B4D' : '#E5484D';
-    const already = action === 'publish' && review.status === 'published';
-    return page(
-      action === 'publish' ? 'انتشار نظر' : 'حذف نظر',
-      `${reviewCard(review)}
-      ${
-        already
-          ? '<p>این نظر همین حالا در سایت منتشر شده است.</p>'
-          : `<form method="post">
-        <input type="hidden" name="id" value="${id}"><input type="hidden" name="action" value="${action}"><input type="hidden" name="sig" value="${sig}">
-        <button style="background:${color}">${label}</button>
-      </form>`
-      }`,
-    );
+    if (action === 'delete') {
+      return page(
+        'حذف نظر',
+        `${reviewCard(review)}
+      <form method="post">${hidden(id, action, exp, sig)}<button style="background:#E5484D">بله، حذف شود</button></form>`,
+      );
+    }
+    // Translate now if it failed on submit, so the teacher always sees (and can fix) what goes on the site.
+    let current = review;
+    if (!review.translation) {
+      current = await addTranslation(env, review, 20);
+      if (current !== review) await env.REVIEWS.put(`review:${id}`, JSON.stringify(current));
+    }
+    return page('انتشار نظر', `${reviewCard(current, false)}${publishForm(current, id, exp, sig)}`);
   }
 
   const published = await readPublished(env.REVIEWS);
   const others = published.filter((r) => r.id !== id);
   if (action === 'publish') {
-    // Normally translated already when it was sent; try again if that failed.
-    const updated: Review = { ...(await addTranslation(env, review, 25)), status: 'published' };
+    // The translation is exactly what the teacher saw and edited on the confirm page; empty text means none.
+    const tText = clean(params.get('tText'), 1200).replace(/\n{3,}/g, '\n\n');
+    const translation: Review['translation'] = tText
+      ? {
+          lang: review.lang === 'fa' ? 'en' : 'fa',
+          name: clean(params.get('tName'), 80).replace(/\s+/g, ' ') || review.name,
+          child: clean(params.get('tChild'), 60).replace(/\s+/g, ' '),
+          text: tText,
+        }
+      : undefined;
+    const updated: Review = { ...review, translation, status: 'published' };
     await env.REVIEWS.put(`review:${id}`, JSON.stringify(updated));
     const list = [toPublic(updated), ...others]
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -243,9 +276,9 @@ export async function handleReviews(request: Request, env: Env, ctx: ExecutionCo
 const font = "font-family:IRANSansX,IRANSans,Vazirmatn,Tahoma,'Segoe UI',Arial,sans-serif;";
 const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
-function reviewCard(r: Review) {
+function reviewCard(r: Review, withTranslation = true) {
   const e = escapeHtml;
-  const t = r.translation;
+  const t = withTranslation ? r.translation : undefined;
   const translation = t
     ? `<div style="border-top:1px dashed #D9D2BF;margin-top:12px;padding-top:10px;">
     <p style="${font}margin:0;color:#6B7280;font-size:12px;">ترجمه‌ی خودکار به ${t.lang === 'en' ? 'انگلیسی' : 'فارسی'} (برای سمت ${t.lang === 'en' ? 'انگلیسی' : 'فارسی'} سایت):</p>
@@ -260,16 +293,53 @@ function reviewCard(r: Review) {
   </div>`;
 }
 
+const hidden = (id: string, action: Action, exp: string, sig: string) =>
+  `<input type="hidden" name="id" value="${escapeHtml(id)}"><input type="hidden" name="action" value="${action}">` +
+  (exp ? `<input type="hidden" name="exp" value="${escapeHtml(exp)}">` : '') +
+  `<input type="hidden" name="sig" value="${escapeHtml(sig)}">`;
+
+// The confirm page for publishing: the AI translation in editable fields, so the teacher can correct it first.
+function publishForm(r: Review, id: string, exp: string, sig: string) {
+  const e = escapeHtml;
+  const t = r.translation;
+  const to = r.lang === 'fa' ? 'en' : 'fa';
+  const toName = to === 'en' ? 'انگلیسی' : 'فارسی';
+  const dir = to === 'en' ? 'ltr' : 'rtl';
+  const published = r.status === 'published';
+  return `<form method="post">${hidden(id, 'publish', exp, sig)}
+    <h2>ترجمه برای سمت ${toName} سایت</h2>
+    <p class="hint">${t ? 'ترجمه‌ی خودکار است؛ اگر لازم است اصلاحش کنید.' : 'ترجمه‌ی خودکار انجام نشد؛ می‌توانید خودتان بنویسید.'} اگر متن ترجمه خالی بماند، نظر فقط به زبان اصلی نمایش داده می‌شود.</p>
+    <label>نام<input name="tName" dir="${dir}" maxlength="80" value="${e(t?.name ?? '')}"></label>
+    <label>نام و سن فرزند<input name="tChild" dir="${dir}" maxlength="60" value="${e(t?.child ?? '')}"></label>
+    <label>متن نظر<textarea name="tText" dir="${dir}" maxlength="1200" rows="7">${e(t?.text ?? '')}</textarea></label>
+    ${published ? '<p class="hint">این نظر همین حالا در سایت منتشر شده است؛ با دکمه‌ی زیر ترجمه‌اش به‌روز می‌شود.</p>' : ''}
+    <button style="background:#009B4D">${published ? 'ذخیره‌ی ترجمه' : 'بله، در سایت منتشر شود'}</button>
+  </form>`;
+}
+
 function page(title: string, body: string, status = 200) {
   return new Response(
     `<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex"><title>${escapeHtml(title)} | میس لیلا</title>
 <style>body{${font}margin:0;background:#FAF5E9;color:#1F2A37}main{max-width:520px;margin:40px auto;background:#fff;border-radius:20px;padding:24px 26px;box-shadow:0 4px 18px rgba(31,42,55,.08)}
-h1{font-size:22px;margin:0 0 8px}p{line-height:1.9}button{${font}color:#fff;border:0;border-radius:999px;padding:12px 26px;font-size:16px;font-weight:bold;cursor:pointer}a{color:#009B4D;font-weight:bold}</style>
+h1{font-size:22px;margin:0 0 8px}p{line-height:1.9}button{${font}color:#fff;border:0;border-radius:999px;padding:12px 26px;font-size:16px;font-weight:bold;cursor:pointer}a{color:#009B4D;font-weight:bold}
+h2{font-size:17px;margin:20px 0 4px}.hint{color:#6B7280;font-size:13px;margin:0 0 12px}label{display:block;font-size:14px;font-weight:bold;margin:0 0 12px;color:#374151}
+input,textarea{${font}box-sizing:border-box;display:block;width:100%;margin-top:6px;border:2px solid #E5E0D2;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.8;color:#1F2A37;background:#FFFDF8}textarea{resize:vertical}input:focus,textarea:focus{outline:none;border-color:#009B4D}</style>
 </head><body><main><h1>${escapeHtml(title)}</h1>${body}</main></body></html>`,
     {
       status,
-      headers: { 'Content-Type': 'text/html; charset=utf-8', 'X-Robots-Tag': 'noindex', 'Cache-Control': 'no-store' },
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'X-Robots-Tag': 'noindex',
+        'Cache-Control': 'no-store',
+        // Worker responses don't get public/_headers. No scripts, no framing, and the signed URL is never sent on.
+        'Content-Security-Policy':
+          "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'no-referrer',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+      },
     },
   );
 }
@@ -303,7 +373,7 @@ function reviewEmail(r: Review, publishUrl: string, deleteUrl: string) {
       </td></tr>
       <tr><td style="padding:8px 28px;">${reviewCard(r)}</td></tr>
       <tr><td style="padding:0 28px 8px;text-align:right;">
-        <p style="${font}margin:0 0 10px;color:#6B7280;font-size:14px;line-height:1.9;">تا وقتی «انتشار» را نزنید، این نظر در سایت دیده نمی‌شود. بعد از انتشار هم با دکمه‌ی «حذف» می‌توانید آن را بردارید.</p>
+        <p style="${font}margin:0 0 10px;color:#6B7280;font-size:14px;line-height:1.9;">تا وقتی «انتشار» را نزنید، این نظر در سایت دیده نمی‌شود. در صفحه‌ی انتشار می‌توانید ترجمه را پیش از انتشار ویرایش کنید، و بعد از انتشار هم با دکمه‌ی «حذف» آن را بردارید.</p>
         ${button(publishUrl, '✅ انتشار در سایت', '#009B4D')}
         ${button(deleteUrl, '✕ حذف', '#E5484D')}
       </td></tr>

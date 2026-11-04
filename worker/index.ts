@@ -6,7 +6,9 @@
 import { bookingHtml, bookingSubject, bookingText, type BookingEmail } from './email';
 import { sendMail } from './brevo';
 import { handleReviews } from './reviews';
-import { json, str, verifyTurnstile, type Env } from './shared';
+import { json, str, underDailyLimit, verifyTurnstile, type Env } from './shared';
+
+const BOOKINGS_PER_DAY = 3; // per visitor
 
 type Booking = {
   parentName?: unknown;
@@ -40,10 +42,9 @@ async function handleBooking(request: Request, env: Env) {
   // Honeypot: bots fill hidden fields. Pretend success.
   if (str(data.website, 200)) return json({ ok: true });
 
-  if (
-    env.TURNSTILE_SECRET_KEY &&
-    !(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))
-  ) {
+  // Without the Turnstile secret the form would be open to bots, so refuse (the site then offers WhatsApp).
+  if (!env.TURNSTILE_SECRET_KEY) return json({ ok: false, error: 'not_configured' }, 503);
+  if (!(await verifyTurnstile(str(data.turnstileToken, 2048), request, env.TURNSTILE_SECRET_KEY))) {
     return json({ ok: false, error: 'captcha' }, 403);
   }
 
@@ -51,6 +52,12 @@ async function handleBooking(request: Request, env: Env) {
   const phone = str(data.phone, 20);
   const summary = str(data.summary, 2000);
   if (!parentName || !/^\+?\d{8,15}$/.test(phone)) return json({ ok: false, error: 'invalid_fields' }, 400);
+
+  // Stops one visitor flooding the inbox, Telegram and the Brevo quota.
+  const limitKv = env.BOOKINGS ?? env.REVIEWS;
+  if (limitKv && !(await underDailyLimit(limitKv, 'book-ip', request, BOOKINGS_PER_DAY))) {
+    return json({ ok: false, error: 'rate_limited' }, 429);
+  }
 
   const record = {
     id: crypto.randomUUID(),

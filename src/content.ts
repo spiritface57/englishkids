@@ -13,7 +13,10 @@ export const links = {
 };
 
 // Cloudflare Turnstile site key (public). Leave empty to hide the widget; the worker's TURNSTILE_SECRET_KEY must match.
-export const turnstileSiteKey = '0x4AAAAAAFvra3dP-yZGGHH4';
+// The real key only works on englishkids.ir, so on localhost Cloudflare's test key (always passes) is used instead;
+// pair it with the test secret from .dev.vars.example.
+const isLocal = typeof location !== 'undefined' && ['localhost', '127.0.0.1'].includes(location.hostname);
+export const turnstileSiteKey = isLocal ? '1x00000000000000000000AA' : '0x4AAAAAAFvra3dP-yZGGHH4';
 
 export type Lang = 'fa' | 'en';
 
