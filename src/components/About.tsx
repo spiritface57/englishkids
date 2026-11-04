@@ -22,7 +22,7 @@ export default function About() {
           <Reveal delay={0.1}>
             <p className="mt-3 text-xl font-bold text-leaf-700">{t.about.role}</p>
             {t.about.paragraphs.map((p) => (
-              <p key={p.slice(0, 20)} className="mt-5 text-lg leading-9 text-ink/75">
+              <p key={p.slice(0, 20)} className="mt-5 text-justify text-lg leading-9 hyphens-auto text-ink/75">
                 {p}
               </p>
             ))}

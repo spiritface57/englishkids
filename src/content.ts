@@ -62,10 +62,12 @@ export const content = {
     about: {
       eyebrow: 'مدرس شما',
       name: 'لیلا عباسی',
-      role: 'مدرس زبان انگلیسی کودکان با رویکرد آموزشی خلاق و تعاملی',
+      role: 'مدرس زبان انگلیسی و سرپرست آموزشی',
       paragraphs: [
-        'باور من این است که کودکان زبان را همان‌طور یاد می‌گیرند که دنیا را کشف می‌کنند: با بازی، کنجکاوی و تجربه. در کلاس‌های من، انگلیسی یک درس خشک نیست؛ بخشی از بازی، آواز و قصه‌هایی است که بچه‌ها دوستشان دارند.',
-        'هر کودک سرعت و سبک یادگیری خودش را دارد. به همین دلیل کلاس‌ها در گروه‌های کوچک یا به‌صورت خصوصی برگزار می‌شوند تا بتوانم به سطح و نیاز هر زبان‌آموز توجه ویژه داشته باشم.',
+        'با بیش از ۲۲ سال تجربه تخصصی در زمینه تدریس زبان انگلیسی به کودکان و نوجوانان، در مدارس و مؤسسات آموزشی معتبر فعالیت داشته‌ام. سوابق حرفه‌ای من شامل تدریس در مدارس دخترانه آیین روشن، ماه و مهتاب و تقوا، مدارس پسرانه محسن و سروش هدایت و همچنین مؤسسه زبان امیر و نسیما است.',
+        'در کنار فعالیت آموزشی، به مدت چهار سال مسئولیت سرپرستی مدرسه ماه و مهتاب را بر عهده داشته‌ام و در مؤسسه زبان امیر و نسیما نیز به‌عنوان مدرس و سرپرست فعالیت دارم.',
+        'تجربه طولانی‌مدت در آموزش و نظارت آموزشی، به من این امکان را داده است تا با شناخت نیازهای یادگیری کودکان و نوجوانان، در جهت ارتقای کیفیت تدریس، بهبود عملکرد آموزشی و ایجاد محیطی اثربخش برای یادگیری زبان انگلیسی گام بردارم.',
+        'هدف من، ارائه آموزش باکیفیت، پرورش توانایی‌های ارتباطی زبان‌آموزان و ایجاد تجربه‌ای مؤثر و لذت‌بخش از یادگیری زبان انگلیسی است.',
       ],
       quote: 'در کنار یادگیری، دوستی، خلاقیت و تجربه‌های جدید!',
     },
@@ -346,10 +348,12 @@ export const content = {
     about: {
       eyebrow: 'Your teacher',
       name: 'Leila Abbasi',
-      role: "Children's English teacher with a creative, interactive approach",
+      role: 'English teacher and educational supervisor',
       paragraphs: [
-        'I believe children learn a language the same way they discover the world: through play, curiosity and experience. In my classes English is never a dry subject — it is part of the games, songs and stories kids love.',
-        'Every child learns at their own pace and in their own way. That is why classes are private or in small groups, so I can give real attention to each learner’s level and needs.',
+        'With more than 22 years of specialised experience teaching English to children and teenagers, I have worked at respected schools and language institutes. My career includes teaching at the Aein-e Roshan, Mah-o-Mahtab and Taghva girls’ schools, the Mohsen and Soroush-e Hedayat boys’ schools, and the Amir and Nasima Language Institute.',
+        'Alongside teaching, I spent four years as the supervisor of Mah-o-Mahtab School, and I currently work as both a teacher and a supervisor at the Amir and Nasima Language Institute.',
+        'Long experience in teaching and educational supervision has taught me to understand how children and teenagers learn, and to use that to raise the quality of teaching, improve learning outcomes and create an effective environment for learning English.',
+        'My goal is to offer high-quality teaching, develop learners’ communication skills and make learning English an effective and enjoyable experience.',
       ],
       quote: 'Alongside learning: friendship, creativity and new experiences!',
     },
